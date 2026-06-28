@@ -51,3 +51,29 @@ def test_upsert_comments_overwrites_by_reddit_id() -> None:
     stored = repo.get_comment("c1")
     assert stored is not None
     assert stored.body == "updated"
+
+
+def test_iter_helpers_and_count_helpers() -> None:
+    repo = InMemoryContentRepository()
+    created = datetime(2026, 1, 1, tzinfo=UTC)
+    post = RedditPost(
+        reddit_id="p_iter",
+        subreddit="spotify",
+        permalink="https://reddit.com/r/spotify/p_iter",
+        created_utc=created,
+        content_hash="h_iter",
+    )
+    comment = RedditComment(
+        reddit_id="c_iter",
+        post_reddit_id="p_iter",
+        subreddit="spotify",
+        permalink="https://reddit.com/r/spotify/comments/c_iter",
+        created_utc=created,
+        content_hash="hc_iter",
+    )
+    repo.upsert_posts([post])
+    repo.upsert_comments([comment])
+    assert repo.post_count() == 1
+    assert repo.comment_count() == 1
+    assert len(list(repo.iter_posts())) == 1
+    assert len(list(repo.iter_comments())) == 1

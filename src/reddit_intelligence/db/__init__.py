@@ -1,6 +1,17 @@
 """Database access package."""
 
 from reddit_intelligence.db.client import get_supabase_client
-from reddit_intelligence.db.repositories import ContentRepository, InMemoryContentRepository
+from reddit_intelligence.db.repositories import (
+    ContentRepository,
+    CrawlRunRepository,
+    InMemoryContentRepository,
+    InMemoryRunRepository,
+)
 
-__all__ = ["ContentRepository", "InMemoryContentRepository", "get_supabase_client"]
+__all__ = [
+    "ContentRepository",
+    "CrawlRunRepository",
+    "InMemoryContentRepository",
+    "InMemoryRunRepository",
+    "get_supabase_client",
+]

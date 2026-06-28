@@ -21,6 +21,41 @@ class RunSummary:
 AnalysisStatus = Literal["pending", "processing", "complete", "failed", "skipped", "stale"]
 ContentType = Literal["post", "comment"]
 SentimentLabel = Literal["positive", "neutral", "negative", "mixed", "unknown"]
+CrawlRunStatus = Literal["running", "success", "partial", "failed", "budget_stopped"]
+
+
+@dataclass(slots=True)
+class DeletionEvent:
+    """Deletion event metadata for compliance tracking."""
+
+    source_type: ContentType
+    source_reddit_id: str
+    detected_at: datetime
+    action_taken: str
+    originating_job_id: str | None = None
+
+
+@dataclass(slots=True)
+class CrawlRunRecord:
+    """Operational crawl run record persisted by run repositories."""
+
+    run_id: str
+    started_at: datetime
+    trigger_source: str
+    status: CrawlRunStatus
+    finished_at: datetime | None = None
+    subreddits_count: int = 0
+    queries_count: int = 0
+    api_requests: int = 0
+    posts_seen: int = 0
+    posts_upserted: int = 0
+    comments_seen: int = 0
+    comments_upserted: int = 0
+    records_queued_for_analysis: int = 0
+    errors_count: int = 0
+    rate_limit_remaining: float | None = None
+    error_summary: str | None = None
+    metadata: dict[str, object] | None = None
 
 
 class RedditPost(BaseModel):

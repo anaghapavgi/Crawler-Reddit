@@ -14,13 +14,14 @@ from reddit_intelligence.config import (
     load_taxonomy_config,
     missing_required_env_vars,
 )
-from reddit_intelligence.db.repositories import InMemoryContentRepository
+from reddit_intelligence.db.repositories import InMemoryContentRepository, InMemoryRunRepository
 from reddit_intelligence.demo.seeding import write_demo_artifacts
 from reddit_intelligence.logging_config import configure_logging
 from reddit_intelligence.pipeline import run_demo_pipeline
 from reddit_intelligence.processing.relevance import RelevanceScorer
 from reddit_intelligence.reddit.client import create_reddit_client
 from reddit_intelligence.reddit.collector import RedditCollector
+from reddit_intelligence.reddit.deletion_sync import sync_deleted_content
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -93,6 +94,7 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
         settings = load_settings()
         research = load_research_config()
         repository = InMemoryContentRepository()
+        run_repository = InMemoryRunRepository()
         relevance = RelevanceScorer(
             config=RelevanceResearch.model_validate(research.relevance.model_dump()),
             feature_terms=load_taxonomy_config().features,
@@ -102,6 +104,7 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
             relevance_scorer=relevance,
             max_comments_per_post=research.reddit.max_comments_per_post,
             minimum_post_score=research.reddit.minimum_post_score,
+            run_repository=run_repository,
         )
 
         if settings.demo_mode:
@@ -110,12 +113,20 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
                 comments_path=Path("data/fixtures/reddit_comments.json"),
                 matched_query=f"demo-{mode}-{days}",
             )
+            deletion_sync = sync_deleted_content(
+                content_repository=repository,
+                run_repository=run_repository,
+                run_id=metrics.crawl_run_id,
+            )
             typer.echo(
                 "Demo crawl complete: "
+                f"run_id={metrics.crawl_run_id}, "
                 f"posts_seen={metrics.posts_seen}, comments_seen={metrics.comments_seen}, "
                 f"posts_upserted={metrics.posts_upserted}, "
                 f"comments_upserted={metrics.comments_upserted}, "
-                f"queued_for_analysis={metrics.records_queued_for_analysis}"
+                f"queued_for_analysis={metrics.records_queued_for_analysis}, "
+                f"deletion_events="
+                f"{metrics.deletion_events_recorded + deletion_sync.events_recorded}"
             )
             return
 
@@ -125,10 +136,17 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
         metrics = collector.collect_incremental(
             reddit_client=reddit_client, research=research.reddit
         )
+        deletion_sync = sync_deleted_content(
+            content_repository=repository,
+            run_repository=run_repository,
+            run_id=metrics.crawl_run_id,
+        )
         typer.echo(
             "Live crawl complete: "
+            f"run_id={metrics.crawl_run_id}, "
             f"posts_seen={metrics.posts_seen}, comments_seen={metrics.comments_seen}, "
-            f"errors={metrics.errors_count}, rate_limit_remaining={metrics.rate_limit_remaining}"
+            f"errors={metrics.errors_count}, rate_limit_remaining={metrics.rate_limit_remaining}, "
+            f"deletion_events={metrics.deletion_events_recorded + deletion_sync.events_recorded}"
         )
     except Exception as exc:
         typer.echo(f"Crawl failed: {exc}")
