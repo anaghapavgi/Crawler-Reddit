@@ -2,19 +2,20 @@
 
 Last updated: 2026-06-28 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Planning only (no production implementation code modified)  
+Mode: Phase 0 scaffold implemented; Phase 1 pending  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
 ## Current overall status
 
-- Repository state: prompt/spec scaffold only; no `src/`, `tests/`, `docs/`, `config/`, `migrations/`, or workflow implementation exists yet.
-- Current phase: **Pre-Phase Planning and Repository Audit**
-- Current phase status: **ready_for_review (planning artifacts completed)**
+- Repository state: planning docs plus Phase 0 scaffold created (`src/`, `tests/`, `config/`, `data/`, `scripts/`, toolchain files).
+- Current phase: **Phase 0 - Plan and scaffold**
+- Current phase status: **completed**
 - Acceptance gate for current phase:
-  - Required planning docs exist and are internally consistent.
-  - Plan includes dependency order, test strategy, manual setup boundaries, demo/live split, and failure modes.
-- Immediate blockers: none for planning; external credentials intentionally deferred.
+  - installation works (using `python3 -m pip install -e ".[dev]"`)
+  - `ruff`, `mypy`, placeholder tests pass
+  - CLI help works
+- Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
 ---
@@ -23,8 +24,8 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 
 | Phase | Name | Status | Acceptance Gate | External Dependencies | Blockers |
 |---|---|---|---|---|---|
-| 0 | Plan and scaffold | pending | Tooling install works; `ruff`/`mypy`/placeholder tests pass; CLI help works | None (demo-first) | None |
-| 1 | Config, models, database | pending | Config validation, migration review, repository tests, demo seed success | Supabase optional for live path | None (demo path available) |
+| 0 | Plan and scaffold | completed | Tooling install works; `ruff`/`mypy`/placeholder tests pass; CLI help works | None (demo-first) | None |
+| 1 | Config, models, database | in_progress | Config validation, migration review, repository tests, demo seed success | Supabase optional for live path | None (demo path available) |
 | 2 | Reddit collection | pending | Fixture crawler tests, idempotency, rate-limit capture, live verification only if creds exist | Reddit credentials for live verification | Awaiting credentials for live tests |
 | 3 | AI analysis | pending | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Awaiting credentials for live tests |
 | 4 | Analytics and views | pending | Metric fixtures match expected values; zero-volume/deleted exclusion behavior | None for demo; DB needed for live SQL execution | None |
@@ -202,7 +203,7 @@ All are deferred until demo-mode path is complete and validated locally.
 
 ---
 
-## Commands run and results (this planning turn)
+## Commands run and results (planning + Phase 0)
 
 | Command | Result |
 |---|---|
@@ -212,6 +213,16 @@ All are deferred until demo-mode path is complete and validated locally.
 | File inspections via tooling (`README_START_HERE.md`, `MASTER_BUILD_PROMPT.md`, `AGENTS.md`, `PHASE_PROMPTS.md`, `MANUAL_SETUP_CHECKLIST.md`, `ACCEPTANCE_CHECKLIST.md`, `OFFICIAL_REFERENCES.md`, `.env.example`, `README.md`, `reddit-intelligence.mdc`) | Completed |
 | `.cursor` directory presence check | `.cursor` is currently missing |
 | Tree and directory glob checks (`src`, `tests`, `docs`, `config`, `.github`) | No implementation directories currently present |
+| `python3 --version && python3 -m pip --version` | Python 3.12.3 detected |
+| `python3 -m pip install -e ".[dev]"` (first attempt) | Failed due missing Hatch wheel package mapping in `pyproject.toml` |
+| Added `[tool.hatch.build.targets.wheel] packages = ["src/reddit_intelligence"]` | Packaging fix applied |
+| `python3 -m pip install -e ".[dev]"` (second attempt) | Succeeded |
+| `python3 -m ruff format --check .` (first run) | Failed: `cli.py` required formatting |
+| `python3 -m ruff format .` | Applied formatting |
+| `python3 -m ruff check .` (first run after format) | Failed: `pipeline.py` `timezone.utc` lint (`UP017`) |
+| Updated `pipeline.py` to use `datetime.UTC` | Lint fix applied |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest -q && python3 -m reddit_intelligence.cli --help` | All checks passed; 2 tests passed; CLI help displayed expected commands |
+| `python3 scripts/smoke_test.py` | Passed (`status=success`) |
 
 ---
 
@@ -222,11 +233,56 @@ All are deferred until demo-mode path is complete and validated locally.
 - `docs/data-flow.md` (created)
 - `docs/manual-setup.md` (created)
 - `docs/testing-strategy.md` (created)
+- `.cursor/rules/reddit-intelligence.mdc` (created)
+- `.streamlit/config.toml` (created)
+- `.gitignore` (created)
+- `.pre-commit-config.yaml` (created)
+- `pyproject.toml` (created)
+- `Makefile` (created)
+- `README.md` (updated)
+- `CHANGELOG.md` (created)
+- `LICENSE` (created)
+- `config/research.yml` (created)
+- `config/taxonomy.yml` (created)
+- `migrations/001_initial_schema.sql` (placeholder scaffold created)
+- `scripts/bootstrap.py` (created)
+- `scripts/seed_demo.py` (created)
+- `scripts/verify_environment.py` (created)
+- `scripts/smoke_test.py` (created)
+- `src/reddit_intelligence/__init__.py` (created)
+- `src/reddit_intelligence/cli.py` (created)
+- `src/reddit_intelligence/config.py` (created)
+- `src/reddit_intelligence/logging_config.py` (created)
+- `src/reddit_intelligence/models.py` (created)
+- `src/reddit_intelligence/pipeline.py` (created)
+- `src/reddit_intelligence/reddit/__init__.py` (created)
+- `src/reddit_intelligence/processing/__init__.py` (created)
+- `src/reddit_intelligence/ai/__init__.py` (created)
+- `src/reddit_intelligence/db/__init__.py` (created)
+- `src/reddit_intelligence/analytics/__init__.py` (created)
+- `src/reddit_intelligence/dashboard/__init__.py` (created)
+- `src/reddit_intelligence/dashboard/app.py` (created)
+- `src/reddit_intelligence/dashboard/pages/__init__.py` (created)
+- `tests/conftest.py` (created)
+- `tests/unit/test_cli.py` (created)
+- `tests/unit/test_pipeline.py` (created)
+- `tests/integration/.gitkeep` (created)
+- `tests/fixtures/.gitkeep` (created)
+- `data/fixtures/reddit_posts.json` (created)
+- `data/fixtures/reddit_comments.json` (created)
+- `data/fixtures/ai_results.json` (created)
+- `data/demo/demo_dataset.csv` (created)
+- `docs/database.md` (created)
+- `docs/deployment.md` (created)
+- `docs/privacy-and-compliance.md` (created)
+- `docs/dashboard-metrics.md` (created)
+- `docs/troubleshooting.md` (created)
+- `docs/verification-report.md` (created)
 
 ---
 
 ## Next action
 
-1. Present the full dependency-ordered plan for review and approval.
-2. Await approval before any production implementation code changes.
-3. After approval, begin Phase 0 scaffold execution in demo mode.
+1. Begin Phase 1 implementation: validated settings, taxonomy/research loaders, and full initial SQL migration.
+2. Add DB client/repositories with idempotent upsert interfaces and demo repository implementation.
+3. Expand tests for configuration validation and repository behavior before moving to Phase 2.

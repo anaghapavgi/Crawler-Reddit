@@ -1,24 +1,54 @@
-# Start Here
+# Reddit Product Intelligence
 
-This prompt pack is designed for Cursor Agent or Google Antigravity.
+AI-powered Reddit review discovery and analytics application focused on product intelligence.
 
-## Recommended use
+## Current status
 
-1. Create an empty Git repository.
-2. Copy the contents of this pack into the repository root.
-3. Open the repository in Cursor or Antigravity.
-4. Review `MANUAL_SETUP_CHECKLIST.md` but do not add secrets yet.
-5. Paste the complete contents of `MASTER_BUILD_PROMPT.md` into the coding agent.
-6. Ask the agent to operate in plan-and-execute mode and remain inside the repository.
-7. Let it complete phases using demo mode first.
-8. Add credentials only after the demo, tests, and secret protections work.
-9. Use `PHASE_PROMPTS.md` if the agent loses context or tries to build too much at once.
-10. Use `ACCEPTANCE_CHECKLIST.md` before considering the project complete.
+Phase 0 scaffold is in progress. The repository now includes:
+- Python package configuration (`pyproject.toml`)
+- lint/type/test tooling setup
+- CLI skeleton
+- project rule file under `.cursor/rules`
+- planning and architecture documentation
 
-## Best safety setting
+See `BUILD_STATUS.md` for the authoritative phase tracker and command evidence.
 
-Require approval for commands that delete files, change system configuration, install global packages, access folders outside the repository, or transmit data. Allow normal project-local editing, virtual-environment package installation, tests, and browser verification.
+## Quick start (demo-first)
 
-## Expected outputs
+### Option A: pip + venv
 
-The coding agent should produce a full Python repository, not only code snippets. It must include demo data, tests, SQL migration, GitHub Actions, documentation, and a deployable Streamlit app.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -e ".[dev]"
+```
+
+### Option B: uv
+
+```bash
+uv sync --all-extras
+```
+
+## Basic commands
+
+```bash
+python -m reddit_intelligence.cli --help
+ruff format --check .
+ruff check .
+mypy src
+pytest
+python scripts/smoke_test.py
+```
+
+## Environment setup
+
+1. Copy `.env.example` to `.env`.
+2. Keep `DEMO_MODE=true` for local development until demo path is fully working.
+3. Do not commit `.env` or any secret.
+
+## Manual setup
+
+Credential and deployment steps are documented in:
+- `MANUAL_SETUP_CHECKLIST.md`
+- `docs/manual-setup.md`

@@ -1,0 +1,66 @@
+themes:
+  - recommendation_quality
+  - repetitive_recommendations
+  - lack_of_novelty
+  - genre_over_personalisation
+  - mood_mismatch
+  - regional_language_discovery
+  - new_release_discovery
+  - playlist_stagnation
+  - artist_diversity
+  - contextual_recommendations
+  - discovery_fatigue
+  - algorithm_trust
+  - manual_search_effort
+  - recommendation_controls
+  - other
+
+features:
+  - Discover Weekly
+  - Daily Mix
+  - Release Radar
+  - Smart Shuffle
+  - Radio
+  - Search
+  - Autoplay
+  - Blend
+  - Daylist
+  - AI DJ
+  - Home Recommendations
+  - Unknown
+
+behavioral_segments:
+  - heavy_daily_listener
+  - casual_listener
+  - playlist_first_user
+  - album_focused_user
+  - discovery_seeker
+  - genre_loyalist
+  - regional_language_listener
+  - new_user
+  - long_term_subscriber
+  - switcher_from_competitor
+  - unknown
+
+journey_stages:
+  - onboarding
+  - search
+  - discovery
+  - playlist_creation
+  - active_listening
+  - library_management
+  - retention
+  - unknown
+
+emotions:
+  - frustration
+  - disappointment
+  - confusion
+  - boredom
+  - delight
+  - trust
+  - surprise
+  - indifference
+  - satisfaction
+  - anger
+  - unknown
