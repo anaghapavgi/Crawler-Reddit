@@ -1,0 +1,58 @@
+project:
+  name: Spotify Music Discovery Research
+  product_name: Spotify
+  timezone: Asia/Kolkata
+
+reddit:
+  subreddits:
+    - truespotify
+    - spotify
+    - musicsuggestions
+    - LetsTalkMusic
+  search_queries:
+    - '"discover weekly"'
+    - '"same songs"'
+    - '"new music"'
+    - '"music discovery"'
+    - '"recommendation algorithm"'
+    - '"repetitive recommendations"'
+    - '"daily mix"'
+    - '"release radar"'
+  time_filter: month
+  sort: new
+  posts_per_query: 100
+  max_comments_per_post: 250
+  minimum_post_score: 0
+  refresh_active_posts_days: 7
+
+relevance:
+  minimum_text_length: 20
+  minimum_rule_score: 1
+  include_terms:
+    - discover
+    - recommendation
+    - algorithm
+    - playlist
+    - daily mix
+    - discover weekly
+    - release radar
+    - same songs
+    - repetitive
+    - new artists
+  exclude_terms:
+    - playlist promotion
+    - follow my playlist
+    - giveaway
+
+ai:
+  enabled: true
+  batch_size: 10
+  max_records_per_run: 250
+  min_relevance_score: 1
+  min_text_length: 30
+  prompt_version: v1
+
+dashboard:
+  cache_ttl_seconds: 60
+  default_days: 30
+  show_ai_assistant: true
