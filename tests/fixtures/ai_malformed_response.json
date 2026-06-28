@@ -1,0 +1,45 @@
+{
+  "status": "success",
+  "model_name": "mock-model",
+  "prompt_version": "v1",
+  "results": [
+    {
+      "source_type": "post",
+      "source_reddit_id": "abc123",
+      "analyzed_text_hash": "deadbeef",
+      "prompt_version": "v1",
+      "model_name": "mock-model",
+      "relevant": true,
+      "language": "en",
+      "sentiment_label": "positive",
+      "sentiment_score": 1.8,
+      "primary_emotion": "trust",
+      "secondary_emotion": "none",
+      "intensity": 9,
+      "sarcasm_detected": false,
+      "theme": "other",
+      "subtheme": "general",
+      "feature": "Unknown",
+      "journey_stage": "unknown",
+      "user_segment": "unknown",
+      "pain_point": "",
+      "desired_outcome": "",
+      "severity": 6,
+      "confidence": 1.5,
+      "one_line_summary": "invalid",
+      "evidence_snippet": "invalid snippet",
+      "baseline_sentiment_score": 0.1,
+      "input_tokens": 10,
+      "output_tokens": 20,
+      "estimated_cost_usd": 0.0
+    }
+  ],
+  "failed_ids": [],
+  "skipped_ids": [],
+  "usage": {
+    "input_tokens": 10,
+    "output_tokens": 20,
+    "estimated_cost_usd": 0.0,
+    "estimated_cost_inr": 0.0
+  }
+}

@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
+from reddit_intelligence.ai import AIClassifier, BudgetGuard, DeterministicDemoProvider
+from reddit_intelligence.ai.openai_provider import OpenAIProvider
+from reddit_intelligence.ai.schemas import AnalysisInput
 from reddit_intelligence.config import (
     RelevanceResearch,
     load_research_config,
@@ -18,6 +22,7 @@ from reddit_intelligence.db.repositories import InMemoryContentRepository, InMem
 from reddit_intelligence.demo.seeding import write_demo_artifacts
 from reddit_intelligence.logging_config import configure_logging
 from reddit_intelligence.pipeline import run_demo_pipeline
+from reddit_intelligence.processing.deduplication import stable_sha256
 from reddit_intelligence.processing.relevance import RelevanceScorer
 from reddit_intelligence.reddit.client import create_reddit_client
 from reddit_intelligence.reddit.collector import RedditCollector
@@ -155,8 +160,72 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
 
 @app.command("analyze")
 def analyze(limit: int = 100) -> None:
-    """Run analysis scaffold."""
-    typer.echo(f"Analyze scaffold invoked with limit={limit}.")
+    """Run demo-safe analysis foundations with budget guard."""
+    try:
+        settings = load_settings()
+        research = load_research_config()
+        taxonomy = load_taxonomy_config()
+        dataset_path = Path("data/demo/demo_dataset.csv")
+        if not dataset_path.exists():
+            msg = f"Demo dataset not found at {dataset_path}. Run seed-demo first."
+            raise RuntimeError(msg)
+
+        records: list[AnalysisInput] = []
+        with dataset_path.open("r", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                text = str(row.get("text", ""))
+                source_type = str(row.get("source_type", "comment"))
+                source_reddit_id = str(row.get("source_reddit_id", ""))
+                if not source_reddit_id or not text:
+                    continue
+                source_type_literal = "post" if source_type == "post" else "comment"
+                records.append(
+                    AnalysisInput(
+                        source_type=source_type_literal,
+                        source_reddit_id=source_reddit_id,
+                        text=text,
+                        analyzed_text_hash=stable_sha256(text),
+                    )
+                )
+                if len(records) >= limit:
+                    break
+
+        if not records:
+            typer.echo("No records available for analysis.")
+            return
+
+        budget_guard = BudgetGuard(
+            monthly_budget_inr=settings.monthly_ai_budget_inr,
+            max_records_per_run=min(settings.max_ai_records_per_run, limit),
+            max_calls_per_run=settings.max_ai_calls_per_run,
+        )
+        provider = DeterministicDemoProvider()
+        if not settings.demo_mode and settings.openai_api_key and settings.ai_model:
+            provider = OpenAIProvider(
+                api_key=settings.openai_api_key,
+                model_name=settings.ai_model,
+            )
+        classifier = AIClassifier(
+            provider=provider,
+            taxonomy=taxonomy,
+            budget_guard=budget_guard,
+            product_name=research.project.product_name,
+            batch_size=research.ai.batch_size,
+        )
+        result = classifier.classify_records(records=records, month_to_date_spend_inr=0)
+        typer.echo(
+            "Analyze complete: "
+            f"status={result.status}, "
+            f"records_in={len(records)}, analyzed={len(result.results)}, "
+            f"failed={len(result.failed_ids)}, skipped={len(result.skipped_ids)}, "
+            f"model={result.model_name}, prompt={result.prompt_version}, "
+            f"input_tokens={result.usage.input_tokens}, output_tokens={result.usage.output_tokens}, "
+            f"cost_inr={result.usage.estimated_cost_inr:.4f}"
+        )
+    except Exception as exc:
+        typer.echo(f"Analyze failed: {exc}")
+        raise typer.Exit(code=1) from exc
 
 
 @app.command("aggregate")
