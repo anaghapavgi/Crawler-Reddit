@@ -418,7 +418,8 @@ class InMemoryRunRepository:
         due_failures = [
             failure
             for failure in self._pipeline_failures.values()
-            if failure.stage == stage and (failure.next_retry_at is None or failure.next_retry_at <= now)
+            if failure.stage == stage
+            and (failure.next_retry_at is None or failure.next_retry_at <= now)
         ]
         due_failures.sort(key=lambda failure: failure.created_at)
         reserved = due_failures[: max(0, limit)]
@@ -432,7 +433,12 @@ class InMemoryRunRepository:
         failure = self._pipeline_failures.pop(failure_id, None)
         if failure is None:
             return False
-        dedup_key = (failure.source_type, failure.source_reddit_id, failure.stage, failure.error_category)
+        dedup_key = (
+            failure.source_type,
+            failure.source_reddit_id,
+            failure.stage,
+            failure.error_category,
+        )
         self._pipeline_failure_key_index.pop(dedup_key, None)
         return True
 

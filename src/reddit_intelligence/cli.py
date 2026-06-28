@@ -38,6 +38,7 @@ def _get_demo_repositories() -> tuple[InMemoryContentRepository, InMemoryRunRepo
     """Return process-local in-memory repositories for demo-mode commands."""
     return DEMO_CONTENT_REPOSITORY, DEMO_RUN_REPOSITORY
 
+
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 
@@ -237,9 +238,7 @@ def analyze(limit: int = 100) -> None:
         persisted = repository.upsert_analysis_results(
             [AnalysisRecord.model_validate(item.model_dump()) for item in result.results]
         )
-        source_type_lookup = {
-            record.source_reddit_id: record.source_type for record in records
-        }
+        source_type_lookup = {record.source_reddit_id: record.source_type for record in records}
         failures_queued = 0
         for failed_id in result.failed_ids:
             run_repository.record_pipeline_failure(
