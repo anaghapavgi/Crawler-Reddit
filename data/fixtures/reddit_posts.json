@@ -1,1 +1,35 @@
-[]
+[
+  {
+    "id": "p_fixture_001",
+    "subreddit": "spotify",
+    "title": "Discover Weekly keeps repeating the same songs",
+    "selftext": "I keep getting familiar tracks and want more novelty.",
+    "permalink": "/r/spotify/comments/p_fixture_001/demo_post_one/",
+    "score": 42,
+    "upvote_ratio": 0.91,
+    "num_comments": 2,
+    "created_utc": 1719532800
+  },
+  {
+    "id": "p_fixture_002",
+    "subreddit": "truespotify",
+    "title": "Any good recommendation controls for Daily Mix?",
+    "selftext": "I want to tune genres without doing manual search every time.",
+    "permalink": "/r/truespotify/comments/p_fixture_002/demo_post_two/",
+    "score": 15,
+    "upvote_ratio": 0.84,
+    "num_comments": 1,
+    "created_utc": 1719619200
+  },
+  {
+    "id": "p_fixture_003",
+    "subreddit": "musicsuggestions",
+    "title": "[deleted]",
+    "selftext": "[removed]",
+    "permalink": "/r/musicsuggestions/comments/p_fixture_003/demo_post_three/",
+    "score": 3,
+    "upvote_ratio": 0.5,
+    "num_comments": 0,
+    "created_utc": 1719705600
+  }
+]

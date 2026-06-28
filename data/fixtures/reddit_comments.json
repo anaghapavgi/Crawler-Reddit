@@ -1,1 +1,35 @@
-[]
+[
+  {
+    "id": "c_fixture_001",
+    "post_reddit_id": "p_fixture_001",
+    "parent_id": "t3_p_fixture_001",
+    "subreddit": "spotify",
+    "body": "Same issue here. Discover Weekly is too repetitive now.",
+    "permalink": "/r/spotify/comments/p_fixture_001/c_fixture_001/",
+    "score": 11,
+    "depth": 0,
+    "created_utc": 1719536400
+  },
+  {
+    "id": "c_fixture_002",
+    "post_reddit_id": "p_fixture_001",
+    "parent_id": "t1_c_fixture_001",
+    "subreddit": "spotify",
+    "body": "Oh great, another week of songs I already liked two years ago...",
+    "permalink": "/r/spotify/comments/p_fixture_001/c_fixture_002/",
+    "score": 8,
+    "depth": 1,
+    "created_utc": 1719537300
+  },
+  {
+    "id": "c_fixture_003",
+    "post_reddit_id": "p_fixture_002",
+    "parent_id": "t3_p_fixture_002",
+    "subreddit": "truespotify",
+    "body": "More control sliders could help recommendation quality.",
+    "permalink": "/r/truespotify/comments/p_fixture_002/c_fixture_003/",
+    "score": 6,
+    "depth": 0,
+    "created_utc": 1719620400
+  }
+]
