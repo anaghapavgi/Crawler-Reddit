@@ -27,3 +27,11 @@ def test_retry_failures_command_runs() -> None:
     result = runner.invoke(app, ["retry-failures", "--stage", "analysis", "--limit", "5"])
     assert result.exit_code == 0
     assert "Retry failures complete:" in result.stdout
+
+
+def test_aggregate_command_reports_summary() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["aggregate", "--days", "30"])
+    assert result.exit_code == 0
+    assert "Aggregate complete:" in result.stdout
+    assert "emerging=" in result.stdout

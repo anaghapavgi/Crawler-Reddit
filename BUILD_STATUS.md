@@ -2,22 +2,20 @@
 
 Last updated: 2026-06-28 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Phase 0/1/2 completed; Phase 3 in progress  
+Mode: Phase 0/1/2/3 completed (demo); Phase 4 in progress  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
 ## Current overall status
 
 - Repository state: planning docs plus Phase 0 scaffold created (`src/`, `tests/`, `config/`, `data/`, `scripts/`, toolchain files).
-- Current phase: **Phase 3 - AI analysis**
+- Current phase: **Phase 4 - Analytics and views**
 - Current phase status: **in_progress**
 - Acceptance gate for current phase:
-  - strict schema validation for malformed model payloads ✅
-  - prompt-injection fixture tests enforce non-instruction-following prompt boundaries ✅
-  - budget guard halts analysis when caps are reached ✅
-  - taxonomy-safe coercion + deterministic demo provider path verified ✅
-  - analysis outputs persisted through repository adapters with idempotent dedup keys ✅
-  - analysis run metadata + retry queue scaffolding wired into CLI flow ✅
+  - deterministic view-like aggregations (daily/theme/feature/segment/emerging) implemented in Python ✅
+  - `aggregate` CLI computes KPI snapshot + trend deltas in demo mode ✅
+  - formula parity and sparse/zero-baseline tests added and passing ✅
+  - deleted-content exclusion behavior validated in analytics tests ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -30,8 +28,8 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 | 0 | Plan and scaffold | completed | Tooling install works; `ruff`/`mypy`/placeholder tests pass; CLI help works | None (demo-first) | None |
 | 1 | Config, models, database | completed | Config validation, migration review, repository tests, demo seed success | Supabase optional for live path | None |
 | 2 | Reddit collection | completed | Fixture crawler tests, idempotency, rate-limit capture, live verification only if creds exist | Reddit credentials for live verification | Live verification awaiting credentials |
-| 3 | AI analysis | in_progress | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Live OpenAI verification awaiting credentials |
-| 4 | Analytics and views | pending | Metric fixtures match expected values; zero-volume/deleted exclusion behavior | None for demo; DB needed for live SQL execution | None |
+| 3 | AI analysis | completed | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Live OpenAI verification awaiting credentials |
+| 4 | Analytics and views | in_progress | Metric fixtures match expected values; zero-volume/deleted exclusion behavior | None for demo; DB needed for live SQL execution | None |
 | 5 | Dashboard | pending | All pages render in demo mode; filters, export, empty states, browser verification | Streamlit runtime; optional live DB | None |
 | 6 | Scheduling and deployment | pending | Workflow YAML valid; dispatch/concurrency/timeouts/schedules correct | GitHub repo settings/secrets; Streamlit Cloud setup | Awaiting manual platform setup |
 | 7 | Compliance, hardening, final QA | pending | Full checks pass; secret hygiene; clean demo launch; DoD checklist complete | Credentials required for live end-to-end verification | Awaiting credentials and platform access |
@@ -258,6 +256,9 @@ All are deferred until demo-mode path is complete and validated locally.
 | Implemented Phase 3 persistence continuation (`models.py`, `db/repositories.py`, `cli.py`) for `analysis_runs`, `content_analysis` adapters, and `pipeline_failures` retry queue | Completed |
 | Added/updated tests for analysis persistence and retry queue behavior (`test_repositories.py`, `test_run_repository.py`, `test_cli.py`) | Completed |
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (after persistence continuation) | Passed; 49 tests, total coverage 86%, smoke test passed |
+| Implemented Phase 4 analytics modules (`analytics/aggregates.py`, `analytics/metrics.py`, `analytics/trends.py`) and wired `cli aggregate` to deterministic demo computations | Completed |
+| Added Phase 4 tests (`test_analytics_aggregates.py`, `test_analytics_trends.py`) and extended CLI aggregate command coverage | Completed |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (after Phase 4 start) | Passed; 57 tests, total coverage 87%, smoke test passed |
 
 ---
 
@@ -390,11 +391,19 @@ All are deferred until demo-mode path is complete and validated locally.
 - `tests/unit/test_repositories.py` (updated with analysis result idempotency coverage)
 - `tests/unit/test_run_repository.py` (updated with analysis run + retry queue lifecycle coverage)
 - `tests/unit/test_cli.py` (updated analyze/retry command behavior coverage)
+- `src/reddit_intelligence/analytics/aggregates.py` (created with deterministic daily/theme/feature/segment/emerging summaries)
+- `src/reddit_intelligence/analytics/metrics.py` (created with KPI snapshot helpers)
+- `src/reddit_intelligence/analytics/trends.py` (created with windowed trend delta helpers)
+- `src/reddit_intelligence/analytics/__init__.py` (updated exports for analytics service functions)
+- `src/reddit_intelligence/cli.py` (updated aggregate command to compute analytics summaries/trends)
+- `tests/unit/test_analytics_aggregates.py` (created)
+- `tests/unit/test_analytics_trends.py` (created)
+- `tests/unit/test_cli.py` (updated aggregate command coverage)
 
 ---
 
 ## Next action
 
-1. Begin Phase 4 analytics aggregation modules against SQL views (`v_daily_sentiment`, `v_theme_summary`, `v_feature_summary`, `v_segment_summary`, `v_pipeline_health`, `v_emerging_themes`).
-2. Implement deterministic analytics computation helpers for dashboard KPIs and trend deltas with deleted-content exclusion guarantees.
-3. Add Phase 4 unit tests for formula parity, sparse-data handling, and emerging-theme zero-baseline behavior.
+1. Implement pipeline-health analytics helpers aligned with `v_pipeline_health` (freshness, pending/failed/stale totals, success-rate, cumulative cost).
+2. Add DB-backed query adapters to switch analytics sources between live SQL views and demo CSV computations.
+3. Start Phase 5 dashboard data-access wiring to consume new analytics snapshot outputs.
