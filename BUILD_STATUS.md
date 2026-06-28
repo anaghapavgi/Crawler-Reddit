@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-28 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Phase 0/1/2/3 completed (demo); Phase 4 in progress  
+Mode: Phase 0/1/2/3 completed (demo); Phase 4 in progress; Phase 5 initial wiring started  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
@@ -16,6 +16,9 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
   - `aggregate` CLI computes KPI snapshot + trend deltas in demo mode ✅
   - formula parity and sparse/zero-baseline tests added and passing ✅
   - deleted-content exclusion behavior validated in analytics tests ✅
+  - pipeline-health helper aligned with `v_pipeline_health` fields and tested ✅
+  - analytics source adapters switch between demo CSV and live SQL-view paths ✅
+  - dashboard home page now consumes cached analytics bundle via data-access layer ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -259,6 +262,10 @@ All are deferred until demo-mode path is complete and validated locally.
 | Implemented Phase 4 analytics modules (`analytics/aggregates.py`, `analytics/metrics.py`, `analytics/trends.py`) and wired `cli aggregate` to deterministic demo computations | Completed |
 | Added Phase 4 tests (`test_analytics_aggregates.py`, `test_analytics_trends.py`) and extended CLI aggregate command coverage | Completed |
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (after Phase 4 start) | Passed; 57 tests, total coverage 87%, smoke test passed |
+| Implemented pipeline-health analytics + data-access adapters (`analytics/pipeline_health.py`, `analytics/data_access.py`) and shared demo runtime state (`runtime_state.py`) | Completed |
+| Wired initial dashboard data-access (`dashboard/data_access.py`) and home page metrics (`dashboard/app.py`) to analytics bundle outputs | Completed |
+| Added tests for pipeline-health and analytics data-access behavior (`test_pipeline_health.py`, `test_analytics_data_access.py`) | Completed |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (after pipeline-health + data-access wiring) | Passed; 61 tests, total coverage 84%, smoke test passed |
 
 ---
 
@@ -399,11 +406,20 @@ All are deferred until demo-mode path is complete and validated locally.
 - `tests/unit/test_analytics_aggregates.py` (created)
 - `tests/unit/test_analytics_trends.py` (created)
 - `tests/unit/test_cli.py` (updated aggregate command coverage)
+- `src/reddit_intelligence/analytics/pipeline_health.py` (created with pipeline health snapshot helpers and view-row parser)
+- `src/reddit_intelligence/analytics/data_access.py` (created with demo/live analytics source adapters and unified dashboard bundle loader)
+- `src/reddit_intelligence/runtime_state.py` (created with shared demo repositories for CLI/dashboard)
+- `src/reddit_intelligence/dashboard/data_access.py` (created with cached dashboard bundle loader)
+- `src/reddit_intelligence/dashboard/app.py` (updated to render initial KPI/pipeline/emerging-theme outputs)
+- `src/reddit_intelligence/db/repositories.py` (updated with list methods for crawl/analysis runs)
+- `tests/unit/test_pipeline_health.py` (created)
+- `tests/unit/test_analytics_data_access.py` (created)
+- `docs/dashboard-metrics.md` (updated with formulas and source behavior)
 
 ---
 
 ## Next action
 
-1. Implement pipeline-health analytics helpers aligned with `v_pipeline_health` (freshness, pending/failed/stale totals, success-rate, cumulative cost).
-2. Add DB-backed query adapters to switch analytics sources between live SQL views and demo CSV computations.
-3. Start Phase 5 dashboard data-access wiring to consume new analytics snapshot outputs.
+1. Expand dashboard beyond home page into Phase 5 multipage structure (overview/sentiment/pain points/features/segments/trends/explorer/assistant/pipeline-health).
+2. Add dashboard-focused tests for data-access caching behavior, filter state propagation, and empty-state rendering.
+3. Add live-mode integration tests (mocked Supabase client) for SQL-view adapter pagination/bounded query behavior.

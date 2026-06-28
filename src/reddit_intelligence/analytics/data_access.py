@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Protocol
+from typing import Literal, Protocol
 
 from reddit_intelligence.analytics.aggregates import (
     AggregationSnapshot,
@@ -19,7 +20,11 @@ from reddit_intelligence.analytics.pipeline_health import (
     compute_pipeline_health_from_repositories,
     pipeline_health_from_view_row,
 )
-from reddit_intelligence.analytics.trends import TrendValue, compute_sentiment_trend, compute_volume_trend
+from reddit_intelligence.analytics.trends import (
+    TrendValue,
+    compute_sentiment_trend,
+    compute_volume_trend,
+)
 from reddit_intelligence.config import Settings
 from reddit_intelligence.db.client import get_supabase_client
 from reddit_intelligence.db.repositories import InMemoryContentRepository, InMemoryRunRepository
@@ -134,6 +139,16 @@ def _as_int(value: object) -> int:
     return 0
 
 
+def _mapping_rows(value: object) -> list[Mapping[str, object]]:
+    if not isinstance(value, list):
+        return []
+    rows: list[Mapping[str, object]] = []
+    for item in value:
+        if isinstance(item, Mapping):
+            rows.append(item)
+    return rows
+
+
 class SupabaseViewAnalyticsAdapter:
     """Live adapter that reads analytics SQL views through Supabase."""
 
@@ -156,10 +171,12 @@ class SupabaseViewAnalyticsAdapter:
             .range(0, self._max_rows - 1)
             .execute()
         )
-        rows = response.data if isinstance(response.data, list) else []
+        rows = _mapping_rows(response.data)
         records: list[AnalyticsRecord] = []
         for row in rows:
-            source_type = "post" if str(row.get("source_type", "comment")) == "post" else "comment"
+            source_type: Literal["post", "comment"] = (
+                "post" if str(row.get("source_type", "comment")) == "post" else "comment"
+            )
             records.append(
                 AnalyticsRecord(
                     day=_parse_day(row.get("source_created_utc")),
@@ -184,7 +201,7 @@ class SupabaseViewAnalyticsAdapter:
 
     def load_pipeline_health(self) -> PipelineHealthSnapshot:
         response = self._client.table("v_pipeline_health").select("*").limit(1).execute()
-        rows = response.data if isinstance(response.data, list) else []
+        rows = _mapping_rows(response.data)
         if not rows:
             now = datetime.now(tz=UTC)
             return PipelineHealthSnapshot(

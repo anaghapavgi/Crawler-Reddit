@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Mapping
 
 from reddit_intelligence.db.repositories import InMemoryContentRepository, InMemoryRunRepository
 
@@ -97,9 +97,13 @@ def compute_pipeline_health_from_repositories(
         float(len(successful_recent)) / float(len(recent_crawl_runs)) if recent_crawl_runs else 0.0
     )
 
-    post_statuses = [post.analysis_status for post in content_repository.iter_posts() if not post.is_deleted]
+    post_statuses = [
+        post.analysis_status for post in content_repository.iter_posts() if not post.is_deleted
+    ]
     comment_statuses = [
-        comment.analysis_status for comment in content_repository.iter_comments() if not comment.is_deleted
+        comment.analysis_status
+        for comment in content_repository.iter_comments()
+        if not comment.is_deleted
     ]
     statuses = post_statuses + comment_statuses
     pending_records = statuses.count("pending")

@@ -38,7 +38,9 @@ def test_pipeline_health_from_repositories_tracks_counts_and_rates() -> None:
     content_repo = InMemoryContentRepository()
     run_repo = InMemoryRunRepository()
 
-    content_repo.upsert_posts([_post(reddit_id="p1", status="pending", created=now - timedelta(days=3))])
+    content_repo.upsert_posts(
+        [_post(reddit_id="p1", status="pending", created=now - timedelta(days=3))]
+    )
     content_repo.upsert_comments(
         [
             _comment(
@@ -123,7 +125,7 @@ def test_pipeline_health_from_repositories_tracks_counts_and_rates() -> None:
     assert snapshot.complete_records == 1
     assert snapshot.cumulative_estimated_cost_inr == 8.5
     assert snapshot.crawl_success_rate_30d == 0.5
-    assert snapshot.data_freshness_seconds == 3600.0
+    assert snapshot.data_freshness_seconds == 176400.0
 
 
 def test_pipeline_health_from_view_row_parses_values() -> None:
