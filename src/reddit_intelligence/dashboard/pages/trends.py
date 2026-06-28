@@ -20,7 +20,10 @@ def render(bundle: DashboardAnalyticsBundle) -> None:
     col1.metric(
         "Volume (Current Window)",
         f"{bundle.volume_trend.current_value:.0f}",
-        delta=f"{bundle.volume_trend.delta_absolute:+.0f} ({_format_percent(bundle.volume_trend.delta_percent)})",
+        delta=(
+            f"{bundle.volume_trend.delta_absolute:+.0f} "
+            f"({_format_percent(bundle.volume_trend.delta_percent)})"
+        ),
     )
     col2.metric(
         "Sentiment (Current Window)",

@@ -37,25 +37,25 @@ def test_dashboard_analytics_bundle_live_mode_requires_supabase_credentials() ->
 
 
 class _FakeQuery:
-    def __init__(self, client: "_FakeClient", table_name: str) -> None:
+    def __init__(self, client: _FakeClient, table_name: str) -> None:
         self.client = client
         self.table_name = table_name
         self.range_args: tuple[int, int] | None = None
         self.limit_arg: int | None = None
         self.gte_args: tuple[str, str] | None = None
 
-    def select(self, _columns: str) -> "_FakeQuery":
+    def select(self, _columns: str) -> _FakeQuery:
         return self
 
-    def gte(self, column: str, value: str) -> "_FakeQuery":
+    def gte(self, column: str, value: str) -> _FakeQuery:
         self.gte_args = (column, value)
         return self
 
-    def range(self, start: int, end: int) -> "_FakeQuery":
+    def range(self, start: int, end: int) -> _FakeQuery:
         self.range_args = (start, end)
         return self
 
-    def limit(self, size: int) -> "_FakeQuery":
+    def limit(self, size: int) -> _FakeQuery:
         self.limit_arg = size
         return self
 
