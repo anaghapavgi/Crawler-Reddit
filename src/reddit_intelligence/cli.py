@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -21,12 +22,21 @@ from reddit_intelligence.config import (
 from reddit_intelligence.db.repositories import InMemoryContentRepository, InMemoryRunRepository
 from reddit_intelligence.demo.seeding import write_demo_artifacts
 from reddit_intelligence.logging_config import configure_logging
+from reddit_intelligence.models import AnalysisRecord
 from reddit_intelligence.pipeline import run_demo_pipeline
 from reddit_intelligence.processing.deduplication import stable_sha256
 from reddit_intelligence.processing.relevance import RelevanceScorer
 from reddit_intelligence.reddit.client import create_reddit_client
 from reddit_intelligence.reddit.collector import RedditCollector
 from reddit_intelligence.reddit.deletion_sync import sync_deleted_content
+
+DEMO_CONTENT_REPOSITORY = InMemoryContentRepository()
+DEMO_RUN_REPOSITORY = InMemoryRunRepository()
+
+
+def _get_demo_repositories() -> tuple[InMemoryContentRepository, InMemoryRunRepository]:
+    """Return process-local in-memory repositories for demo-mode commands."""
+    return DEMO_CONTENT_REPOSITORY, DEMO_RUN_REPOSITORY
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -98,8 +108,7 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
     try:
         settings = load_settings()
         research = load_research_config()
-        repository = InMemoryContentRepository()
-        run_repository = InMemoryRunRepository()
+        repository, run_repository = _get_demo_repositories()
         relevance = RelevanceScorer(
             config=RelevanceResearch.model_validate(research.relevance.model_dump()),
             feature_terms=load_taxonomy_config().features,
@@ -160,11 +169,14 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
 
 @app.command("analyze")
 def analyze(limit: int = 100) -> None:
-    """Run demo-safe analysis foundations with budget guard."""
+    """Run analysis with persistence hooks and failure queueing."""
+    analysis_run_id: str | None = None
+    records_attempted = 0
     try:
         settings = load_settings()
         research = load_research_config()
         taxonomy = load_taxonomy_config()
+        repository, run_repository = _get_demo_repositories()
         dataset_path = Path("data/demo/demo_dataset.csv")
         if not dataset_path.exists():
             msg = f"Demo dataset not found at {dataset_path}. Run seed-demo first."
@@ -193,6 +205,7 @@ def analyze(limit: int = 100) -> None:
                 if len(records) >= limit:
                     break
 
+        records_attempted = len(records)
         if not records:
             typer.echo("No records available for analysis.")
             return
@@ -208,6 +221,11 @@ def analyze(limit: int = 100) -> None:
                 api_key=settings.openai_api_key,
                 model_name=settings.ai_model,
             )
+        analysis_run_id = run_repository.start_analysis_run(
+            model_name=provider.model_name,
+            prompt_version=research.ai.prompt_version,
+            metadata={"demo_mode": settings.demo_mode, "limit": limit},
+        )
         classifier = AIClassifier(
             provider=provider,
             taxonomy=taxonomy,
@@ -216,17 +234,87 @@ def analyze(limit: int = 100) -> None:
             batch_size=research.ai.batch_size,
         )
         result = classifier.classify_records(records=records, month_to_date_spend_inr=0)
+        persisted = repository.upsert_analysis_results(
+            [AnalysisRecord.model_validate(item.model_dump()) for item in result.results]
+        )
+        source_type_lookup = {
+            record.source_reddit_id: record.source_type for record in records
+        }
+        failures_queued = 0
+        for failed_id in result.failed_ids:
+            run_repository.record_pipeline_failure(
+                source_type=source_type_lookup.get(failed_id, "comment"),
+                source_reddit_id=failed_id,
+                stage="analysis",
+                error_category="provider_failure",
+                last_error=result.error_summary or "provider_batch_failure",
+                next_retry_at=datetime.now(tz=UTC),
+                metadata={"analysis_run_id": analysis_run_id},
+            )
+            failures_queued += 1
+        for skipped_id in result.skipped_ids:
+            run_repository.record_pipeline_failure(
+                source_type=source_type_lookup.get(skipped_id, "comment"),
+                source_reddit_id=skipped_id,
+                stage="analysis",
+                error_category="budget_skipped",
+                last_error="analysis skipped due to budget guard",
+                next_retry_at=datetime.now(tz=UTC),
+                metadata={"analysis_run_id": analysis_run_id},
+            )
+            failures_queued += 1
+
+        run_repository.finalize_analysis_run(
+            run_id=analysis_run_id,
+            status=result.status,
+            records_attempted=records_attempted,
+            records_succeeded=len(result.results),
+            records_failed=len(result.failed_ids),
+            records_skipped=len(result.skipped_ids),
+            input_tokens=result.usage.input_tokens,
+            output_tokens=result.usage.output_tokens,
+            estimated_cost_usd=result.usage.estimated_cost_usd,
+            estimated_cost_inr=result.usage.estimated_cost_inr,
+            error_summary=result.error_summary,
+            metadata={"persisted_rows": persisted},
+        )
         typer.echo(
             "Analyze complete: "
+            f"run_id={analysis_run_id}, "
             f"status={result.status}, "
             f"records_in={len(records)}, analyzed={len(result.results)}, "
             f"failed={len(result.failed_ids)}, skipped={len(result.skipped_ids)}, "
+            f"persisted={persisted}, failures_queued={failures_queued}, "
             f"model={result.model_name}, prompt={result.prompt_version}, "
             f"input_tokens={result.usage.input_tokens}, "
             f"output_tokens={result.usage.output_tokens}, "
             f"cost_inr={result.usage.estimated_cost_inr:.4f}"
         )
     except Exception as exc:
+        if analysis_run_id is not None:
+            _, run_repository = _get_demo_repositories()
+            run_repository.finalize_analysis_run(
+                run_id=analysis_run_id,
+                status="failed",
+                records_attempted=records_attempted,
+                records_succeeded=0,
+                records_failed=records_attempted,
+                records_skipped=0,
+                input_tokens=0,
+                output_tokens=0,
+                estimated_cost_usd=0,
+                estimated_cost_inr=0,
+                error_summary=str(exc),
+            )
+            run_repository.record_pipeline_failure(
+                source_type="run",
+                source_reddit_id=analysis_run_id,
+                stage="analysis",
+                error_category="run_failure",
+                last_error=str(exc),
+                next_retry_at=datetime.now(tz=UTC),
+                metadata={"records_attempted": records_attempted},
+            )
         typer.echo(f"Analyze failed: {exc}")
         raise typer.Exit(code=1) from exc
 
@@ -244,9 +332,24 @@ def sync_deletions(days: int = 14) -> None:
 
 
 @app.command("retry-failures")
-def retry_failures(stage: str = "analysis") -> None:
-    """Retry failed work items scaffold."""
-    typer.echo(f"Retry failures scaffold invoked for stage={stage}.")
+def retry_failures(stage: str = "analysis", limit: int = 25) -> None:
+    """Reserve and process due failures from the retry queue."""
+    _, run_repository = _get_demo_repositories()
+    reserved = run_repository.reserve_failures_for_retry(
+        stage=stage,
+        now=datetime.now(tz=UTC),
+        limit=limit,
+    )
+    resolved = 0
+    for failure in reserved:
+        # Demo-safe placeholder: resolve immediately after reservation.
+        if run_repository.resolve_pipeline_failure(failure.failure_id):
+            resolved += 1
+    remaining = len(run_repository.list_pipeline_failures(stage=stage))
+    typer.echo(
+        "Retry failures complete: "
+        f"stage={stage}, reserved={len(reserved)}, resolved={resolved}, remaining={remaining}"
+    )
 
 
 @app.command("run-pipeline")

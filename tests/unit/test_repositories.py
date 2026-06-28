@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from reddit_intelligence.db.repositories import InMemoryContentRepository
-from reddit_intelligence.models import RedditComment, RedditPost
+from reddit_intelligence.models import AnalysisRecord, RedditComment, RedditPost
 
 
 def test_upsert_posts_is_idempotent_and_merges_matched_queries() -> None:
@@ -77,3 +77,28 @@ def test_iter_helpers_and_count_helpers() -> None:
     assert repo.comment_count() == 1
     assert len(list(repo.iter_posts())) == 1
     assert len(list(repo.iter_comments())) == 1
+
+
+def test_upsert_analysis_results_is_idempotent_by_prompt_and_hash() -> None:
+    repo = InMemoryContentRepository()
+    first = AnalysisRecord(
+        source_type="post",
+        source_reddit_id="p1",
+        analyzed_text_hash="hash-1",
+        prompt_version="v1",
+        model_name="demo",
+        relevant=True,
+        sentiment_label="neutral",
+        sentiment_score=0,
+        intensity=2,
+        severity=2,
+        confidence=0.5,
+    )
+    duplicate = first.model_copy(update={"one_line_summary": "updated summary"})
+
+    assert repo.upsert_analysis_results([first]) == 1
+    assert repo.upsert_analysis_results([duplicate]) == 1
+    assert repo.analysis_count() == 1
+    latest = repo.get_latest_analysis(source_type="post", source_reddit_id="p1")
+    assert latest is not None
+    assert latest.one_line_summary == "updated summary"
