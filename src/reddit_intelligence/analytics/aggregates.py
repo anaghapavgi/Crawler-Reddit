@@ -167,7 +167,9 @@ def compute_theme_summary(records: list[AnalyticsRecord]) -> list[ThemeSummary]:
             theme=theme,
             subtheme=subtheme,
             record_count=len(bucket),
-            negative_rate=_avg([1.0 if item.sentiment_label == "negative" else 0.0 for item in bucket]),
+            negative_rate=_avg(
+                [1.0 if item.sentiment_label == "negative" else 0.0 for item in bucket]
+            ),
             avg_severity=_avg([float(item.severity) for item in bucket]),
             avg_confidence=_avg([item.confidence for item in bucket]),
         )

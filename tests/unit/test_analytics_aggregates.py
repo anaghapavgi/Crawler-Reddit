@@ -52,8 +52,20 @@ def _record(
 def test_theme_summary_formula_parity() -> None:
     day = date(2026, 1, 10)
     rows = [
-        _record(day=day, source_reddit_id="a", theme="pricing", subtheme="monthly", sentiment_label="negative"),
-        _record(day=day, source_reddit_id="b", theme="pricing", subtheme="monthly", sentiment_label="positive"),
+        _record(
+            day=day,
+            source_reddit_id="a",
+            theme="pricing",
+            subtheme="monthly",
+            sentiment_label="negative",
+        ),
+        _record(
+            day=day,
+            source_reddit_id="b",
+            theme="pricing",
+            subtheme="monthly",
+            sentiment_label="positive",
+        ),
     ]
     summary = compute_theme_summary(rows)
     assert len(summary) == 1

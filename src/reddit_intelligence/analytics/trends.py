@@ -57,8 +57,14 @@ def compute_volume_trend(
     """Compute mention volume change between current and previous windows."""
     eligible = [record for record in records if record.relevant and not record.is_deleted]
     if reference_day is None:
-        reference_day = (max(record.day for record in eligible) + timedelta(days=1)) if eligible else date.today()
-    previous_start, current_start, current_end = _window_bounds(reference_day=reference_day, days=days)
+        reference_day = (
+            (max(record.day for record in eligible) + timedelta(days=1))
+            if eligible
+            else date.today()
+        )
+    previous_start, current_start, current_end = _window_bounds(
+        reference_day=reference_day, days=days
+    )
     previous = float(len(_records_in_range(eligible, start=previous_start, end=current_start)))
     current = float(len(_records_in_range(eligible, start=current_start, end=current_end)))
     return TrendValue(
@@ -79,8 +85,14 @@ def compute_sentiment_trend(
     """Compute average sentiment-score change between adjacent windows."""
     eligible = [record for record in records if record.relevant and not record.is_deleted]
     if reference_day is None:
-        reference_day = (max(record.day for record in eligible) + timedelta(days=1)) if eligible else date.today()
-    previous_start, current_start, current_end = _window_bounds(reference_day=reference_day, days=days)
+        reference_day = (
+            (max(record.day for record in eligible) + timedelta(days=1))
+            if eligible
+            else date.today()
+        )
+    previous_start, current_start, current_end = _window_bounds(
+        reference_day=reference_day, days=days
+    )
     previous_records = _records_in_range(eligible, start=previous_start, end=current_start)
     current_records = _records_in_range(eligible, start=current_start, end=current_end)
     previous = _avg([record.sentiment_score for record in previous_records])

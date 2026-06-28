@@ -53,7 +53,9 @@ def compute_kpi_snapshot(
     return KpiSnapshot(
         total_relevant_records=len(window),
         avg_sentiment_score=_avg([record.sentiment_score for record in window]),
-        negative_rate=_avg([1.0 if record.sentiment_label == "negative" else 0.0 for record in window]),
+        negative_rate=_avg(
+            [1.0 if record.sentiment_label == "negative" else 0.0 for record in window]
+        ),
         avg_confidence=_avg([record.confidence for record in window]),
         sarcasm_rate=_avg([1.0 if record.sarcasm_detected else 0.0 for record in window]),
     )

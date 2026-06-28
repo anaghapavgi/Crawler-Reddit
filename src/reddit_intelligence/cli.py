@@ -10,6 +10,8 @@ from typing import Annotated, Literal
 import typer
 
 from reddit_intelligence.ai import AIClassifier, AIProvider, BudgetGuard, DeterministicDemoProvider
+from reddit_intelligence.ai.openai_provider import OpenAIProvider
+from reddit_intelligence.ai.schemas import AnalysisInput
 from reddit_intelligence.analytics import (
     build_aggregation_snapshot,
     compute_kpi_snapshot,
@@ -17,8 +19,6 @@ from reddit_intelligence.analytics import (
     compute_volume_trend,
     load_analytics_records_from_csv,
 )
-from reddit_intelligence.ai.openai_provider import OpenAIProvider
-from reddit_intelligence.ai.schemas import AnalysisInput
 from reddit_intelligence.config import (
     RelevanceResearch,
     load_research_config,
