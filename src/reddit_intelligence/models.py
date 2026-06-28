@@ -20,8 +20,10 @@ class RunSummary:
 
 AnalysisStatus = Literal["pending", "processing", "complete", "failed", "skipped", "stale"]
 ContentType = Literal["post", "comment"]
+FailureSourceType = Literal["post", "comment", "run"]
 SentimentLabel = Literal["positive", "neutral", "negative", "mixed", "unknown"]
 CrawlRunStatus = Literal["running", "success", "partial", "failed", "budget_stopped"]
+AnalysisRunStatus = Literal["running", "success", "partial", "failed", "budget_stopped"]
 
 
 @dataclass(slots=True)
@@ -55,6 +57,45 @@ class CrawlRunRecord:
     errors_count: int = 0
     rate_limit_remaining: float | None = None
     error_summary: str | None = None
+    metadata: dict[str, object] | None = None
+
+
+@dataclass(slots=True)
+class AnalysisRunRecord:
+    """Operational analysis run metadata tracked per analyze invocation."""
+
+    run_id: str
+    started_at: datetime
+    status: AnalysisRunStatus
+    model_name: str
+    prompt_version: str
+    finished_at: datetime | None = None
+    records_attempted: int = 0
+    records_succeeded: int = 0
+    records_failed: int = 0
+    records_skipped: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    estimated_cost_usd: float = 0
+    estimated_cost_inr: float = 0
+    metadata: dict[str, object] | None = None
+    error_summary: str | None = None
+
+
+@dataclass(slots=True)
+class PipelineFailureRecord:
+    """Retry-queue entry for failed crawl/analysis pipeline work."""
+
+    failure_id: str
+    source_type: FailureSourceType
+    source_reddit_id: str
+    stage: str
+    error_category: str
+    attempt_count: int
+    last_error: str
+    created_at: datetime
+    updated_at: datetime
+    next_retry_at: datetime | None = None
     metadata: dict[str, object] | None = None
 
 

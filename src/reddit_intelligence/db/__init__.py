@@ -2,6 +2,7 @@
 
 from reddit_intelligence.db.client import get_supabase_client
 from reddit_intelligence.db.repositories import (
+    AnalysisRunRepository,
     ContentRepository,
     CrawlRunRepository,
     InMemoryContentRepository,
@@ -9,6 +10,7 @@ from reddit_intelligence.db.repositories import (
 )
 
 __all__ = [
+    "AnalysisRunRepository",
     "ContentRepository",
     "CrawlRunRepository",
     "InMemoryContentRepository",

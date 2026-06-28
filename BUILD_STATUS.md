@@ -16,6 +16,8 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
   - prompt-injection fixture tests enforce non-instruction-following prompt boundaries ✅
   - budget guard halts analysis when caps are reached ✅
   - taxonomy-safe coercion + deterministic demo provider path verified ✅
+  - analysis outputs persisted through repository adapters with idempotent dedup keys ✅
+  - analysis run metadata + retry queue scaffolding wired into CLI flow ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -253,6 +255,9 @@ All are deferred until demo-mode path is complete and validated locally.
 | Added Phase 3 fixtures/tests (`tests/fixtures/ai_malformed_response.json`, `tests/fixtures/prompt_injection_input.txt`, `tests/unit/test_ai_*`, `tests/unit/test_sentiment_baseline.py`) | Completed |
 | Updated `docs/verification-report.md` with explicit `AWAITING_CREDENTIALS` status for live OAuth/DB/OpenAI checks while keeping demo path default | Completed |
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (after Phase 3 edits) | Passed; 44 tests, total coverage 81%, smoke test passed |
+| Implemented Phase 3 persistence continuation (`models.py`, `db/repositories.py`, `cli.py`) for `analysis_runs`, `content_analysis` adapters, and `pipeline_failures` retry queue | Completed |
+| Added/updated tests for analysis persistence and retry queue behavior (`test_repositories.py`, `test_run_repository.py`, `test_cli.py`) | Completed |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (after persistence continuation) | Passed; 49 tests, total coverage 86%, smoke test passed |
 
 ---
 
@@ -378,11 +383,18 @@ All are deferred until demo-mode path is complete and validated locally.
 - `tests/unit/test_ai_schemas.py` (created)
 - `tests/unit/test_sentiment_baseline.py` (created)
 - `docs/verification-report.md` (updated with live verification status markers)
+- `src/reddit_intelligence/models.py` (updated with `AnalysisRunRecord`, `PipelineFailureRecord`, and failure/run status types)
+- `src/reddit_intelligence/db/repositories.py` (updated with analysis persistence + retry queue protocols/in-memory methods)
+- `src/reddit_intelligence/db/__init__.py` (updated exports for analysis run repository protocol)
+- `src/reddit_intelligence/cli.py` (updated analyze persistence hooks and retry-failures queue processing)
+- `tests/unit/test_repositories.py` (updated with analysis result idempotency coverage)
+- `tests/unit/test_run_repository.py` (updated with analysis run + retry queue lifecycle coverage)
+- `tests/unit/test_cli.py` (updated analyze/retry command behavior coverage)
 
 ---
 
 ## Next action
 
-1. Persist analysis outputs and run metadata through repository adapters (`content_analysis`, `analysis_runs`, and `pipeline_failures` hooks).
-2. Add retry queue wiring for failed analysis batches with idempotent reprocessing.
-3. Begin Phase 4 analytics aggregation modules against the defined SQL views and formulas.
+1. Begin Phase 4 analytics aggregation modules against SQL views (`v_daily_sentiment`, `v_theme_summary`, `v_feature_summary`, `v_segment_summary`, `v_pipeline_health`, `v_emerging_themes`).
+2. Implement deterministic analytics computation helpers for dashboard KPIs and trend deltas with deleted-content exclusion guarantees.
+3. Add Phase 4 unit tests for formula parity, sparse-data handling, and emerging-theme zero-baseline behavior.
