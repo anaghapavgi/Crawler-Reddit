@@ -8,14 +8,19 @@ from typing import Annotated
 import typer
 
 from reddit_intelligence.config import (
+    RelevanceResearch,
     load_research_config,
     load_settings,
     load_taxonomy_config,
     missing_required_env_vars,
 )
+from reddit_intelligence.db.repositories import InMemoryContentRepository
 from reddit_intelligence.demo.seeding import write_demo_artifacts
 from reddit_intelligence.logging_config import configure_logging
 from reddit_intelligence.pipeline import run_demo_pipeline
+from reddit_intelligence.processing.relevance import RelevanceScorer
+from reddit_intelligence.reddit.client import create_reddit_client
+from reddit_intelligence.reddit.collector import RedditCollector
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -84,7 +89,47 @@ def seed_demo(
 @app.command("crawl")
 def crawl(mode: str = "incremental", days: int = 30) -> None:
     """Run collector scaffold."""
-    typer.echo(f"Crawl scaffold invoked with mode={mode}, days={days}.")
+    try:
+        settings = load_settings()
+        research = load_research_config()
+        repository = InMemoryContentRepository()
+        relevance = RelevanceScorer(
+            config=RelevanceResearch.model_validate(research.relevance.model_dump()),
+            feature_terms=load_taxonomy_config().features,
+        )
+        collector = RedditCollector(
+            repository=repository,
+            relevance_scorer=relevance,
+            max_comments_per_post=research.reddit.max_comments_per_post,
+            minimum_post_score=research.reddit.minimum_post_score,
+        )
+
+        if settings.demo_mode:
+            metrics = collector.collect_from_fixture(
+                posts_path=Path("data/fixtures/reddit_posts.json"),
+                comments_path=Path("data/fixtures/reddit_comments.json"),
+                matched_query=f"demo-{mode}-{days}",
+            )
+            typer.echo(
+                "Demo crawl complete: "
+                f"posts_seen={metrics.posts_seen}, comments_seen={metrics.comments_seen}, "
+                f"posts_upserted={metrics.posts_upserted}, comments_upserted={metrics.comments_upserted}, "
+                f"queued_for_analysis={metrics.records_queued_for_analysis}"
+            )
+            return
+
+        reddit_client = create_reddit_client(settings)
+        if reddit_client is None:
+            raise RuntimeError("Reddit client unavailable in live mode.")
+        metrics = collector.collect_incremental(reddit_client=reddit_client, research=research.reddit)
+        typer.echo(
+            "Live crawl complete: "
+            f"posts_seen={metrics.posts_seen}, comments_seen={metrics.comments_seen}, "
+            f"errors={metrics.errors_count}, rate_limit_remaining={metrics.rate_limit_remaining}"
+        )
+    except Exception as exc:
+        typer.echo(f"Crawl failed: {exc}")
+        raise typer.Exit(code=1) from exc
 
 
 @app.command("analyze")

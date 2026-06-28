@@ -54,3 +54,11 @@ class InMemoryContentRepository:
 
     def get_comment(self, reddit_id: str) -> RedditComment | None:
         return self._comments.get(reddit_id)
+
+    def post_count(self) -> int:
+        """Return current post count in repository."""
+        return len(self._posts)
+
+    def comment_count(self) -> int:
+        """Return current comment count in repository."""
+        return len(self._comments)
