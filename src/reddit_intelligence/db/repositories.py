@@ -110,6 +110,9 @@ class CrawlRunRepository(Protocol):
     def list_deletion_events(self) -> list[DeletionEvent]:
         """Return all recorded deletion events."""
 
+    def list_crawl_runs(self) -> list[CrawlRunRecord]:
+        """Return all crawl runs in reverse chronological order."""
+
 
 class AnalysisRunRepository(Protocol):
     """Persistence interface for analysis runs and retry queue failures."""
@@ -171,6 +174,9 @@ class AnalysisRunRepository(Protocol):
 
     def list_pipeline_failures(self, stage: str | None = None) -> list[PipelineFailureRecord]:
         """Return queued failures, optionally filtered by stage."""
+
+    def list_analysis_runs(self) -> list[AnalysisRunRecord]:
+        """Return all analysis runs in reverse chronological order."""
 
 
 class InMemoryContentRepository:
@@ -315,6 +321,9 @@ class InMemoryRunRepository:
     def list_deletion_events(self) -> list[DeletionEvent]:
         return list(self._deletion_events)
 
+    def list_crawl_runs(self) -> list[CrawlRunRecord]:
+        return sorted(self._runs.values(), key=lambda run: run.started_at, reverse=True)
+
     def start_analysis_run(
         self,
         *,
@@ -450,3 +459,6 @@ class InMemoryRunRepository:
             (failure for failure in failures if failure.stage == stage),
             key=lambda failure: failure.created_at,
         )
+
+    def list_analysis_runs(self) -> list[AnalysisRunRecord]:
+        return sorted(self._analysis_runs.values(), key=lambda run: run.started_at, reverse=True)
