@@ -40,13 +40,11 @@ def build_classification_prompt(
     lines = [header]
     for idx, record in enumerate(records, start=1):
         lines.append(
-            (
-                f"\nRecord {idx}\n"
-                f"id={record.source_reddit_id}\n"
-                f"type={record.source_type}\n"
-                f"hash={record.analyzed_text_hash}\n"
-                f"text={record.text}\n"
-            )
+            f"\nRecord {idx}\n"
+            f"id={record.source_reddit_id}\n"
+            f"type={record.source_type}\n"
+            f"hash={record.analyzed_text_hash}\n"
+            f"text={record.text}\n"
         )
     return "".join(lines)
 

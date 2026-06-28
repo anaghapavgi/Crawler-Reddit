@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
-from reddit_intelligence.ai import AIClassifier, BudgetGuard, DeterministicDemoProvider
+from reddit_intelligence.ai import AIClassifier, AIProvider, BudgetGuard, DeterministicDemoProvider
 from reddit_intelligence.ai.openai_provider import OpenAIProvider
 from reddit_intelligence.ai.schemas import AnalysisInput
 from reddit_intelligence.config import (
@@ -179,7 +179,9 @@ def analyze(limit: int = 100) -> None:
                 source_reddit_id = str(row.get("source_reddit_id", ""))
                 if not source_reddit_id or not text:
                     continue
-                source_type_literal = "post" if source_type == "post" else "comment"
+                source_type_literal: Literal["post", "comment"] = (
+                    "post" if source_type == "post" else "comment"
+                )
                 records.append(
                     AnalysisInput(
                         source_type=source_type_literal,
@@ -200,7 +202,7 @@ def analyze(limit: int = 100) -> None:
             max_records_per_run=min(settings.max_ai_records_per_run, limit),
             max_calls_per_run=settings.max_ai_calls_per_run,
         )
-        provider = DeterministicDemoProvider()
+        provider: AIProvider = DeterministicDemoProvider()
         if not settings.demo_mode and settings.openai_api_key and settings.ai_model:
             provider = OpenAIProvider(
                 api_key=settings.openai_api_key,
@@ -220,7 +222,8 @@ def analyze(limit: int = 100) -> None:
             f"records_in={len(records)}, analyzed={len(result.results)}, "
             f"failed={len(result.failed_ids)}, skipped={len(result.skipped_ids)}, "
             f"model={result.model_name}, prompt={result.prompt_version}, "
-            f"input_tokens={result.usage.input_tokens}, output_tokens={result.usage.output_tokens}, "
+            f"input_tokens={result.usage.input_tokens}, "
+            f"output_tokens={result.usage.output_tokens}, "
             f"cost_inr={result.usage.estimated_cost_inr:.4f}"
         )
     except Exception as exc:

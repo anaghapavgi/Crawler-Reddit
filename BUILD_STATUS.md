@@ -2,20 +2,20 @@
 
 Last updated: 2026-06-28 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Phase 0/1 completed; Phase 2 in progress  
+Mode: Phase 0/1/2 completed; Phase 3 in progress  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
 ## Current overall status
 
 - Repository state: planning docs plus Phase 0 scaffold created (`src/`, `tests/`, `config/`, `data/`, `scripts/`, toolchain files).
-- Current phase: **Phase 2 - Reddit collection**
+- Current phase: **Phase 3 - AI analysis**
 - Current phase status: **in_progress**
 - Acceptance gate for current phase:
-  - fixture crawler tests pass ✅
-  - duplicate fixture runs remain idempotent ✅
-  - rate-limit metadata capture covered in integration tests ✅
-  - live verification performed only when credentials exist ✅ (deferred; no credentials used)
+  - strict schema validation for malformed model payloads ✅
+  - prompt-injection fixture tests enforce non-instruction-following prompt boundaries ✅
+  - budget guard halts analysis when caps are reached ✅
+  - taxonomy-safe coercion + deterministic demo provider path verified ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -27,8 +27,8 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 |---|---|---|---|---|---|
 | 0 | Plan and scaffold | completed | Tooling install works; `ruff`/`mypy`/placeholder tests pass; CLI help works | None (demo-first) | None |
 | 1 | Config, models, database | completed | Config validation, migration review, repository tests, demo seed success | Supabase optional for live path | None |
-| 2 | Reddit collection | in_progress | Fixture crawler tests, idempotency, rate-limit capture, live verification only if creds exist | Reddit credentials for live verification | Live verification awaiting credentials |
-| 3 | AI analysis | pending | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Awaiting credentials for live tests |
+| 2 | Reddit collection | completed | Fixture crawler tests, idempotency, rate-limit capture, live verification only if creds exist | Reddit credentials for live verification | Live verification awaiting credentials |
+| 3 | AI analysis | in_progress | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Live OpenAI verification awaiting credentials |
 | 4 | Analytics and views | pending | Metric fixtures match expected values; zero-volume/deleted exclusion behavior | None for demo; DB needed for live SQL execution | None |
 | 5 | Dashboard | pending | All pages render in demo mode; filters, export, empty states, browser verification | Streamlit runtime; optional live DB | None |
 | 6 | Scheduling and deployment | pending | Workflow YAML valid; dispatch/concurrency/timeouts/schedules correct | GitHub repo settings/secrets; Streamlit Cloud setup | Awaiting manual platform setup |
@@ -249,6 +249,10 @@ All are deferred until demo-mode path is complete and validated locally.
 | Updated `cli.py` crawl output string wrapping for lint compliance | Fix applied |
 | Updated `db/repositories.py` metric parsing helpers (`_as_int`, `_as_float`) to satisfy MyPy strict typing | Fix applied |
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (second run after hook updates) | Passed; 31 tests, total coverage 83%, smoke test passed |
+| Implemented Phase 3 AI foundations (`src/reddit_intelligence/ai/*`, `processing/sentiment_baseline.py`, `cli analyze` wiring) with deterministic demo provider + budget guard | Completed |
+| Added Phase 3 fixtures/tests (`tests/fixtures/ai_malformed_response.json`, `tests/fixtures/prompt_injection_input.txt`, `tests/unit/test_ai_*`, `tests/unit/test_sentiment_baseline.py`) | Completed |
+| Updated `docs/verification-report.md` with explicit `AWAITING_CREDENTIALS` status for live OAuth/DB/OpenAI checks while keeping demo path default | Completed |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (after Phase 3 edits) | Passed; 44 tests, total coverage 81%, smoke test passed |
 
 ---
 
@@ -356,11 +360,29 @@ All are deferred until demo-mode path is complete and validated locally.
 - `tests/unit/test_deletion_sync.py` (created)
 - `tests/integration/test_reddit_collector.py` (updated for run persistence/deletion sync assertions)
 - `tests/unit/test_repositories.py` (updated iterator/count helper coverage)
+- `src/reddit_intelligence/ai/budget.py` (created)
+- `src/reddit_intelligence/ai/classifier.py` (created)
+- `src/reddit_intelligence/ai/openai_provider.py` (created)
+- `src/reddit_intelligence/ai/prompts.py` (created)
+- `src/reddit_intelligence/ai/provider.py` (created)
+- `src/reddit_intelligence/ai/schemas.py` (created)
+- `src/reddit_intelligence/ai/__init__.py` (updated exports)
+- `src/reddit_intelligence/processing/sentiment_baseline.py` (created)
+- `src/reddit_intelligence/processing/__init__.py` (updated exports)
+- `src/reddit_intelligence/cli.py` (updated analyze command for demo-safe Phase 3 flow)
+- `tests/fixtures/ai_malformed_response.json` (created)
+- `tests/fixtures/prompt_injection_input.txt` (created)
+- `tests/unit/test_ai_budget.py` (created)
+- `tests/unit/test_ai_classifier.py` (created)
+- `tests/unit/test_ai_prompts.py` (created)
+- `tests/unit/test_ai_schemas.py` (created)
+- `tests/unit/test_sentiment_baseline.py` (created)
+- `docs/verification-report.md` (updated with live verification status markers)
 
 ---
 
 ## Next action
 
-1. Mark Reddit OAuth live verification as `AWAITING_CREDENTIALS` in final verification artifacts and keep demo-mode path as default.
-2. Proceed to Phase 3 AI analysis foundations (provider abstraction, schemas/prompts, baseline sentiment integration, budget guard skeleton).
-3. Add malformed-output and prompt-injection fixture tests as part of Phase 3 entry.
+1. Persist analysis outputs and run metadata through repository adapters (`content_analysis`, `analysis_runs`, and `pipeline_failures` hooks).
+2. Add retry queue wiring for failed analysis batches with idempotent reprocessing.
+3. Begin Phase 4 analytics aggregation modules against the defined SQL views and formulas.

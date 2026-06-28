@@ -10,6 +10,7 @@ from reddit_intelligence.ai.provider import AIProvider
 from reddit_intelligence.ai.schemas import (
     AnalysisBatchResult,
     AnalysisInput,
+    BatchStatus,
     ClassificationResult,
     UsageStats,
     validate_result_taxonomy,
@@ -73,7 +74,7 @@ class AIClassifier:
         skipped_ids: list[str] = []
         merged_results: list[ClassificationResult] = []
         usage = UsageStats()
-        status = "success"
+        status: BatchStatus = "success"
         error_summary: str | None = None
 
         for batch in self._chunk(records):
