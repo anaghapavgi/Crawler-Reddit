@@ -6,7 +6,12 @@ from pathlib import Path
 
 import typer
 
-from reddit_intelligence.config import load_settings
+from reddit_intelligence.config import (
+    load_research_config,
+    load_settings,
+    load_taxonomy_config,
+    missing_required_env_vars,
+)
 from reddit_intelligence.logging_config import configure_logging
 from reddit_intelligence.pipeline import run_demo_pipeline
 
@@ -23,14 +28,35 @@ def main() -> None:
 @app.command("verify-env")
 def verify_env() -> None:
     """Validate environment bootstrap."""
-    settings = load_settings()
-    typer.echo(f"Environment verified: APP_ENV={settings.app_env}, DEMO_MODE={settings.demo_mode}")
+    try:
+        settings = load_settings()
+        research = load_research_config()
+        taxonomy = load_taxonomy_config()
+    except Exception as exc:
+        typer.echo(f"Environment verification failed: {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if settings.demo_mode:
+        missing = missing_required_env_vars(settings)
+        if missing:
+            missing_csv = ", ".join(missing)
+            typer.echo(f"Demo mode active; live credentials missing (expected): {missing_csv}")
+
+    typer.echo(
+        "Environment verified: "
+        f"APP_ENV={settings.app_env}, DEMO_MODE={settings.demo_mode}, "
+        f"subreddits={len(research.reddit.subreddits)}, themes={len(taxonomy.themes)}"
+    )
 
 
 @app.command("init-db")
 def init_db() -> None:
     """Prepare database scaffold."""
-    typer.echo("Database initialization scaffold complete.")
+    migration_path = Path("migrations/001_initial_schema.sql")
+    if not migration_path.exists():
+        typer.echo(f"Migration not found: {migration_path}")
+        raise typer.Exit(code=1)
+    typer.echo(f"Database initialization scaffold complete. Migration: {migration_path}")
 
 
 @app.command("seed-demo")

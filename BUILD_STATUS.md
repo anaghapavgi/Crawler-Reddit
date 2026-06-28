@@ -2,19 +2,20 @@
 
 Last updated: 2026-06-28 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Phase 0 scaffold implemented; Phase 1 pending  
+Mode: Phase 0 completed; Phase 1 in progress  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
 ## Current overall status
 
 - Repository state: planning docs plus Phase 0 scaffold created (`src/`, `tests/`, `config/`, `data/`, `scripts/`, toolchain files).
-- Current phase: **Phase 0 - Plan and scaffold**
-- Current phase status: **completed**
+- Current phase: **Phase 1 - Configuration, models, and database**
+- Current phase status: **in_progress**
 - Acceptance gate for current phase:
-  - installation works (using `python3 -m pip install -e ".[dev]"`)
-  - `ruff`, `mypy`, placeholder tests pass
-  - CLI help works
+  - config validation tests pass ✅
+  - migration SQL syntactic/static review pass ✅
+  - repository tests with idempotent demo behavior pass ✅
+  - demo seed path success ⚠️ (currently scaffold-only output; full deterministic seeding pending)
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -25,7 +26,7 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 | Phase | Name | Status | Acceptance Gate | External Dependencies | Blockers |
 |---|---|---|---|---|---|
 | 0 | Plan and scaffold | completed | Tooling install works; `ruff`/`mypy`/placeholder tests pass; CLI help works | None (demo-first) | None |
-| 1 | Config, models, database | in_progress | Config validation, migration review, repository tests, demo seed success | Supabase optional for live path | None (demo path available) |
+| 1 | Config, models, database | in_progress | Config validation, migration review, repository tests, demo seed success | Supabase optional for live path | Demo seed script still scaffold-level |
 | 2 | Reddit collection | pending | Fixture crawler tests, idempotency, rate-limit capture, live verification only if creds exist | Reddit credentials for live verification | Awaiting credentials for live tests |
 | 3 | AI analysis | pending | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Awaiting credentials for live tests |
 | 4 | Analytics and views | pending | Metric fixtures match expected values; zero-volume/deleted exclusion behavior | None for demo; DB needed for live SQL execution | None |
@@ -223,10 +224,15 @@ All are deferred until demo-mode path is complete and validated locally.
 | Updated `pipeline.py` to use `datetime.UTC` | Lint fix applied |
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest -q && python3 -m reddit_intelligence.cli --help` | All checks passed; 2 tests passed; CLI help displayed expected commands |
 | `python3 scripts/smoke_test.py` | Passed (`status=success`) |
+| Implemented Phase 1 core artifacts (`config.py`, `models.py`, `db/*`, migration SQL, tests) | Completed |
+| `python3 -m ruff format . && python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest -q && python3 -m reddit_intelligence.cli verify-env` (first run) | Failed tests due Streamlit secrets lookup exception when no secrets file exists |
+| Updated `_load_streamlit_secrets()` to safely return empty mapping when no Streamlit secrets are configured | Fix applied |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest -q && python3 -m reddit_intelligence.cli verify-env` (second run) | All checks passed; 9 tests passed; verify-env succeeded |
+| `python3 scripts/smoke_test.py` | Passed (`status=success`) |
 
 ---
 
-## Files changed in this planning update
+## Files changed in this branch so far
 
 - `BUILD_STATUS.md` (created)
 - `docs/architecture.md` (created)
@@ -278,11 +284,23 @@ All are deferred until demo-mode path is complete and validated locally.
 - `docs/dashboard-metrics.md` (created)
 - `docs/troubleshooting.md` (created)
 - `docs/verification-report.md` (created)
+- `src/reddit_intelligence/config.py` (updated with validated settings + YAML loaders + Streamlit fallback)
+- `src/reddit_intelligence/models.py` (updated with normalized post/comment/analysis models)
+- `src/reddit_intelligence/cli.py` (updated `verify-env` and `init-db` behavior)
+- `src/reddit_intelligence/db/client.py` (created)
+- `src/reddit_intelligence/db/repositories.py` (created)
+- `src/reddit_intelligence/db/queries.py` (created)
+- `src/reddit_intelligence/db/__init__.py` (updated exports)
+- `scripts/verify_environment.py` (updated with config/taxonomy verification)
+- `migrations/001_initial_schema.sql` (replaced placeholder with full schema/indexes/views)
+- `tests/unit/test_config.py` (created)
+- `tests/unit/test_repositories.py` (created)
+- `tests/unit/test_migration_schema.py` (created)
 
 ---
 
 ## Next action
 
-1. Begin Phase 1 implementation: validated settings, taxonomy/research loaders, and full initial SQL migration.
-2. Add DB client/repositories with idempotent upsert interfaces and demo repository implementation.
-3. Expand tests for configuration validation and repository behavior before moving to Phase 2.
+1. Complete remaining Phase 1 item: implement deterministic demo seeding with realistic 90-day synthetic data.
+2. Add deeper repository integration tests (payload mapping + stale-analysis transitions).
+3. Proceed to Phase 2 Reddit collection implementation after Phase 1 acceptance is fully satisfied.
