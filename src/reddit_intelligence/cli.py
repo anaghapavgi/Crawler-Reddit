@@ -10,6 +10,13 @@ from typing import Annotated, Literal
 import typer
 
 from reddit_intelligence.ai import AIClassifier, AIProvider, BudgetGuard, DeterministicDemoProvider
+from reddit_intelligence.analytics import (
+    build_aggregation_snapshot,
+    compute_kpi_snapshot,
+    compute_sentiment_trend,
+    compute_volume_trend,
+    load_analytics_records_from_csv,
+)
 from reddit_intelligence.ai.openai_provider import OpenAIProvider
 from reddit_intelligence.ai.schemas import AnalysisInput
 from reddit_intelligence.config import (
@@ -319,9 +326,38 @@ def analyze(limit: int = 100) -> None:
 
 
 @app.command("aggregate")
-def aggregate() -> None:
-    """Run analytics aggregation scaffold."""
-    typer.echo("Aggregate scaffold complete.")
+def aggregate(days: int = 30) -> None:
+    """Compute demo-safe analytics summaries and trend deltas."""
+    try:
+        dataset_path = Path("data/demo/demo_dataset.csv")
+        if not dataset_path.exists():
+            msg = f"Demo dataset not found at {dataset_path}. Run seed-demo first."
+            raise RuntimeError(msg)
+        records = load_analytics_records_from_csv(dataset_path)
+        snapshot = build_aggregation_snapshot(records=records)
+        kpis = compute_kpi_snapshot(records, days=days)
+        volume_trend = compute_volume_trend(records, days=days)
+        sentiment_trend = compute_sentiment_trend(records, days=days)
+        sentiment_delta_pct = (
+            f"{sentiment_trend.delta_percent:.4f}"
+            if sentiment_trend.delta_percent is not None
+            else "n/a"
+        )
+        volume_delta_pct = (
+            f"{volume_trend.delta_percent:.4f}" if volume_trend.delta_percent is not None else "n/a"
+        )
+        typer.echo(
+            "Aggregate complete: "
+            f"records={kpis.total_relevant_records}, avg_sentiment={kpis.avg_sentiment_score:.4f}, "
+            f"negative_rate={kpis.negative_rate:.4f}, sarcasm_rate={kpis.sarcasm_rate:.4f}, "
+            f"daily_points={len(snapshot.daily_sentiment)}, themes={len(snapshot.theme_summary)}, "
+            f"features={len(snapshot.feature_summary)}, segments={len(snapshot.segment_summary)}, "
+            f"emerging={len(snapshot.emerging_themes)}, "
+            f"volume_delta_pct={volume_delta_pct}, sentiment_delta_pct={sentiment_delta_pct}"
+        )
+    except Exception as exc:
+        typer.echo(f"Aggregate failed: {exc}")
+        raise typer.Exit(code=1) from exc
 
 
 @app.command("sync-deletions")
