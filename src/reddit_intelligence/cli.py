@@ -13,11 +13,7 @@ from reddit_intelligence.ai import AIClassifier, AIProvider, BudgetGuard, Determ
 from reddit_intelligence.ai.openai_provider import OpenAIProvider
 from reddit_intelligence.ai.schemas import AnalysisInput
 from reddit_intelligence.analytics import (
-    build_aggregation_snapshot,
-    compute_kpi_snapshot,
-    compute_sentiment_trend,
-    compute_volume_trend,
-    load_analytics_records_from_csv,
+    load_dashboard_analytics_bundle,
 )
 from reddit_intelligence.config import (
     RelevanceResearch,
@@ -26,7 +22,6 @@ from reddit_intelligence.config import (
     load_taxonomy_config,
     missing_required_env_vars,
 )
-from reddit_intelligence.db.repositories import InMemoryContentRepository, InMemoryRunRepository
 from reddit_intelligence.demo.seeding import write_demo_artifacts
 from reddit_intelligence.logging_config import configure_logging
 from reddit_intelligence.models import AnalysisRecord
@@ -36,15 +31,7 @@ from reddit_intelligence.processing.relevance import RelevanceScorer
 from reddit_intelligence.reddit.client import create_reddit_client
 from reddit_intelligence.reddit.collector import RedditCollector
 from reddit_intelligence.reddit.deletion_sync import sync_deleted_content
-
-DEMO_CONTENT_REPOSITORY = InMemoryContentRepository()
-DEMO_RUN_REPOSITORY = InMemoryRunRepository()
-
-
-def _get_demo_repositories() -> tuple[InMemoryContentRepository, InMemoryRunRepository]:
-    """Return process-local in-memory repositories for demo-mode commands."""
-    return DEMO_CONTENT_REPOSITORY, DEMO_RUN_REPOSITORY
-
+from reddit_intelligence.runtime_state import get_demo_repositories
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -116,7 +103,7 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
     try:
         settings = load_settings()
         research = load_research_config()
-        repository, run_repository = _get_demo_repositories()
+        repository, run_repository = get_demo_repositories()
         relevance = RelevanceScorer(
             config=RelevanceResearch.model_validate(research.relevance.model_dump()),
             feature_terms=load_taxonomy_config().features,
@@ -184,7 +171,7 @@ def analyze(limit: int = 100) -> None:
         settings = load_settings()
         research = load_research_config()
         taxonomy = load_taxonomy_config()
-        repository, run_repository = _get_demo_repositories()
+        repository, run_repository = get_demo_repositories()
         dataset_path = Path("data/demo/demo_dataset.csv")
         if not dataset_path.exists():
             msg = f"Demo dataset not found at {dataset_path}. Run seed-demo first."
@@ -298,7 +285,7 @@ def analyze(limit: int = 100) -> None:
         )
     except Exception as exc:
         if analysis_run_id is not None:
-            _, run_repository = _get_demo_repositories()
+            _, run_repository = get_demo_repositories()
             run_repository.finalize_analysis_run(
                 run_id=analysis_run_id,
                 status="failed",
@@ -333,27 +320,41 @@ def aggregate(days: int = 30) -> None:
         if not dataset_path.exists():
             msg = f"Demo dataset not found at {dataset_path}. Run seed-demo first."
             raise RuntimeError(msg)
-        records = load_analytics_records_from_csv(dataset_path)
-        snapshot = build_aggregation_snapshot(records=records)
-        kpis = compute_kpi_snapshot(records, days=days)
-        volume_trend = compute_volume_trend(records, days=days)
-        sentiment_trend = compute_sentiment_trend(records, days=days)
+        settings = load_settings()
+        content_repository, run_repository = get_demo_repositories()
+        bundle = load_dashboard_analytics_bundle(
+            settings=settings,
+            days=days,
+            demo_dataset_path=dataset_path,
+            content_repository=content_repository,
+            run_repository=run_repository,
+        )
         sentiment_delta_pct = (
-            f"{sentiment_trend.delta_percent:.4f}"
-            if sentiment_trend.delta_percent is not None
+            f"{bundle.sentiment_trend.delta_percent:.4f}"
+            if bundle.sentiment_trend.delta_percent is not None
             else "n/a"
         )
         volume_delta_pct = (
-            f"{volume_trend.delta_percent:.4f}" if volume_trend.delta_percent is not None else "n/a"
+            f"{bundle.volume_trend.delta_percent:.4f}"
+            if bundle.volume_trend.delta_percent is not None
+            else "n/a"
         )
         typer.echo(
             "Aggregate complete: "
-            f"records={kpis.total_relevant_records}, avg_sentiment={kpis.avg_sentiment_score:.4f}, "
-            f"negative_rate={kpis.negative_rate:.4f}, sarcasm_rate={kpis.sarcasm_rate:.4f}, "
-            f"daily_points={len(snapshot.daily_sentiment)}, themes={len(snapshot.theme_summary)}, "
-            f"features={len(snapshot.feature_summary)}, segments={len(snapshot.segment_summary)}, "
-            f"emerging={len(snapshot.emerging_themes)}, "
-            f"volume_delta_pct={volume_delta_pct}, sentiment_delta_pct={sentiment_delta_pct}"
+            f"source={bundle.source}, records={bundle.kpis.total_relevant_records}, "
+            f"avg_sentiment={bundle.kpis.avg_sentiment_score:.4f}, "
+            f"negative_rate={bundle.kpis.negative_rate:.4f}, "
+            f"sarcasm_rate={bundle.kpis.sarcasm_rate:.4f}, "
+            f"daily_points={len(bundle.snapshot.daily_sentiment)}, "
+            f"themes={len(bundle.snapshot.theme_summary)}, "
+            f"features={len(bundle.snapshot.feature_summary)}, "
+            f"segments={len(bundle.snapshot.segment_summary)}, "
+            f"emerging={len(bundle.snapshot.emerging_themes)}, "
+            f"pipeline_pending={bundle.pipeline_health.pending_records}, "
+            f"pipeline_failed={bundle.pipeline_health.failed_records}, "
+            f"crawl_success_rate_30d={bundle.pipeline_health.crawl_success_rate_30d:.4f}, "
+            f"volume_delta_pct={volume_delta_pct}, "
+            f"sentiment_delta_pct={sentiment_delta_pct}"
         )
     except Exception as exc:
         typer.echo(f"Aggregate failed: {exc}")
@@ -369,7 +370,7 @@ def sync_deletions(days: int = 14) -> None:
 @app.command("retry-failures")
 def retry_failures(stage: str = "analysis", limit: int = 25) -> None:
     """Reserve and process due failures from the retry queue."""
-    _, run_repository = _get_demo_repositories()
+    _, run_repository = get_demo_repositories()
     reserved = run_repository.reserve_failures_for_retry(
         stage=stage,
         now=datetime.now(tz=UTC),
