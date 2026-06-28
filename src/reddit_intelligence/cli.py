@@ -113,7 +113,8 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
             typer.echo(
                 "Demo crawl complete: "
                 f"posts_seen={metrics.posts_seen}, comments_seen={metrics.comments_seen}, "
-                f"posts_upserted={metrics.posts_upserted}, comments_upserted={metrics.comments_upserted}, "
+                f"posts_upserted={metrics.posts_upserted}, "
+                f"comments_upserted={metrics.comments_upserted}, "
                 f"queued_for_analysis={metrics.records_queued_for_analysis}"
             )
             return
@@ -121,7 +122,9 @@ def crawl(mode: str = "incremental", days: int = 30) -> None:
         reddit_client = create_reddit_client(settings)
         if reddit_client is None:
             raise RuntimeError("Reddit client unavailable in live mode.")
-        metrics = collector.collect_incremental(reddit_client=reddit_client, research=research.reddit)
+        metrics = collector.collect_incremental(
+            reddit_client=reddit_client, research=research.reddit
+        )
         typer.echo(
             "Live crawl complete: "
             f"posts_seen={metrics.posts_seen}, comments_seen={metrics.comments_seen}, "

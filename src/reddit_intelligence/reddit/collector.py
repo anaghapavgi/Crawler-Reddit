@@ -100,7 +100,9 @@ class RedditCollector:
             matched_query=matched_query,
         )
 
-    def collect_incremental(self, reddit_client: object, research: RedditResearch) -> CrawlRunMetrics:
+    def collect_incremental(
+        self, reddit_client: object, research: RedditResearch
+    ) -> CrawlRunMetrics:
         """Collect submissions/comments from configured subreddits and queries."""
         metrics = CrawlRunMetrics(
             subreddits_count=len(research.subreddits),
@@ -139,7 +141,9 @@ class RedditCollector:
                     metrics.error_categories.extend(run_metrics.error_categories)
                     metrics.errors_count += run_metrics.errors_count
                     metrics.rate_limit_remaining = run_metrics.rate_limit_remaining
-                except Exception as exc:  # pragma: no cover - exercised via integration tests with fakes
+                except (
+                    Exception
+                ) as exc:  # pragma: no cover - exercised via integration tests with fakes
                     metrics.errors_count += 1
                     metrics.error_categories.append(classify_reddit_exception(exc))
         return metrics
@@ -172,8 +176,12 @@ class RedditCollector:
         """Normalize, score, and persist posts/comments from submission-like objects."""
         metrics = CrawlRunMetrics(rate_limit_remaining=rate_limit_remaining)
         comments_index = comments_by_post or {}
-        post_threshold = self._minimum_post_score if minimum_post_score is None else minimum_post_score
-        comment_cap = self._max_comments_per_post if max_comments_per_post is None else max_comments_per_post
+        post_threshold = (
+            self._minimum_post_score if minimum_post_score is None else minimum_post_score
+        )
+        comment_cap = (
+            self._max_comments_per_post if max_comments_per_post is None else max_comments_per_post
+        )
 
         posts_to_upsert: list[RedditPost] = []
         comments_to_upsert: list[RedditComment] = []
@@ -193,7 +201,9 @@ class RedditCollector:
             if post.score < post_threshold:
                 continue
 
-            raw_comments = self._extract_comments_for_post(post.reddit_id, submission, comments_index)
+            raw_comments = self._extract_comments_for_post(
+                post.reddit_id, submission, comments_index
+            )
             for raw_comment in raw_comments[:comment_cap]:
                 comment = map_comment(raw_comment, post_reddit_id=post.reddit_id)
                 comment_score = self._relevance_scorer.score(comment.body)

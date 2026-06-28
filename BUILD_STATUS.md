@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-28 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Phase 0 and Phase 1 completed; Phase 2 pending  
+Mode: Phase 0/1 completed; Phase 2 in progress  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
@@ -10,13 +10,12 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 
 - Repository state: planning docs plus Phase 0 scaffold created (`src/`, `tests/`, `config/`, `data/`, `scripts/`, toolchain files).
 - Current phase: **Phase 2 - Reddit collection**
-- Current phase status: **pending**
+- Current phase status: **in_progress**
 - Acceptance gate for current phase:
-  - Phase 1 gate complete:
-    - config validation tests pass ✅
-    - migration SQL syntactic/static review pass ✅
-    - repository tests with idempotent demo behavior pass ✅
-    - deterministic demo seed path works with >=90-day data and run/cost artifacts ✅
+  - fixture crawler tests pass ✅
+  - duplicate fixture runs remain idempotent ✅
+  - rate-limit metadata capture covered in integration tests ✅
+  - live verification performed only when credentials exist ✅ (deferred; no credentials used)
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -28,7 +27,7 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 |---|---|---|---|---|---|
 | 0 | Plan and scaffold | completed | Tooling install works; `ruff`/`mypy`/placeholder tests pass; CLI help works | None (demo-first) | None |
 | 1 | Config, models, database | completed | Config validation, migration review, repository tests, demo seed success | Supabase optional for live path | None |
-| 2 | Reddit collection | pending | Fixture crawler tests, idempotency, rate-limit capture, live verification only if creds exist | Reddit credentials for live verification | Awaiting credentials for live tests |
+| 2 | Reddit collection | in_progress | Fixture crawler tests, idempotency, rate-limit capture, live verification only if creds exist | Reddit credentials for live verification | Live verification awaiting credentials |
 | 3 | AI analysis | pending | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Awaiting credentials for live tests |
 | 4 | Analytics and views | pending | Metric fixtures match expected values; zero-volume/deleted exclusion behavior | None for demo; DB needed for live SQL execution | None |
 | 5 | Dashboard | pending | All pages render in demo mode; filters, export, empty states, browser verification | Streamlit runtime; optional live DB | None |
@@ -237,6 +236,12 @@ All are deferred until demo-mode path is complete and validated locally.
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (first run) | Failed format check (`seeding.py`, `test_demo_seeding.py`) |
 | `python3 -m ruff format .` | Applied formatting fixes |
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (second run) | Passed; 12 tests, total coverage 85%, smoke test passed |
+| Implemented Phase 2 modules (`reddit/client.py`, `reddit/mapper.py`, `reddit/collector.py`, `processing/*`) and fixture-based crawl wiring | Completed |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (first run after Phase 2 edits) | Failed format check (`cli.py`, `reddit/__init__.py`, `reddit/collector.py`) |
+| `python3 -m ruff format .` | Applied formatting fixes |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (second run after Phase 2 edits) | Failed lint line-length in `cli.py` |
+| Updated `cli.py` output formatting for lint compliance | Fix applied |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (third run after Phase 2 edits) | Passed; 24 tests, total coverage 83%, smoke test passed |
 
 ---
 
@@ -315,11 +320,28 @@ All are deferred until demo-mode path is complete and validated locally.
 - `data/demo/demo_dataset.csv` (updated with deterministic 90-day dataset)
 - `data/demo/demo_run_history.csv` (created)
 - `data/demo/demo_cost_metrics.json` (created)
+- `src/reddit_intelligence/processing/cleaning.py` (created)
+- `src/reddit_intelligence/processing/deduplication.py` (created)
+- `src/reddit_intelligence/processing/relevance.py` (created)
+- `src/reddit_intelligence/processing/__init__.py` (updated exports)
+- `src/reddit_intelligence/reddit/client.py` (created)
+- `src/reddit_intelligence/reddit/mapper.py` (created)
+- `src/reddit_intelligence/reddit/collector.py` (created)
+- `src/reddit_intelligence/reddit/__init__.py` (updated exports)
+- `src/reddit_intelligence/cli.py` (updated `crawl` to run fixture/live paths)
+- `src/reddit_intelligence/db/repositories.py` (updated count helpers)
+- `data/fixtures/reddit_posts.json` (updated with deterministic crawl fixtures)
+- `data/fixtures/reddit_comments.json` (updated with deterministic crawl fixtures)
+- `tests/unit/test_cleaning.py` (created)
+- `tests/unit/test_deduplication.py` (created)
+- `tests/unit/test_relevance.py` (created)
+- `tests/unit/test_reddit_mapper.py` (created)
+- `tests/integration/test_reddit_collector.py` (created)
 
 ---
 
 ## Next action
 
-1. Begin Phase 2 Reddit collection implementation: PRAW client adapter, mapper, and collector skeleton with fixture-first tests.
-2. Implement cleaning/relevance/hash pipeline modules and incremental crawl orchestration.
-3. Add retry/rate-limit/run logging tests and keep live verification deferred until credentials are available.
+1. Complete remaining Phase 2 items: crawl-run persistence hooks, deletion sync integration points, and broader error-category coverage.
+2. Add selective live verification checklist entries marked `AWAITING_CREDENTIALS` for Reddit OAuth crawling.
+3. Begin Phase 3 AI analysis foundations after final Phase 2 acceptance review.
