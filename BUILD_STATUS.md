@@ -2,20 +2,21 @@
 
 Last updated: 2026-06-28 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Phase 0 completed; Phase 1 in progress  
+Mode: Phase 0 and Phase 1 completed; Phase 2 pending  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
 ## Current overall status
 
 - Repository state: planning docs plus Phase 0 scaffold created (`src/`, `tests/`, `config/`, `data/`, `scripts/`, toolchain files).
-- Current phase: **Phase 1 - Configuration, models, and database**
-- Current phase status: **in_progress**
+- Current phase: **Phase 2 - Reddit collection**
+- Current phase status: **pending**
 - Acceptance gate for current phase:
-  - config validation tests pass ✅
-  - migration SQL syntactic/static review pass ✅
-  - repository tests with idempotent demo behavior pass ✅
-  - demo seed path success ⚠️ (currently scaffold-only output; full deterministic seeding pending)
+  - Phase 1 gate complete:
+    - config validation tests pass ✅
+    - migration SQL syntactic/static review pass ✅
+    - repository tests with idempotent demo behavior pass ✅
+    - deterministic demo seed path works with >=90-day data and run/cost artifacts ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -26,7 +27,7 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 | Phase | Name | Status | Acceptance Gate | External Dependencies | Blockers |
 |---|---|---|---|---|---|
 | 0 | Plan and scaffold | completed | Tooling install works; `ruff`/`mypy`/placeholder tests pass; CLI help works | None (demo-first) | None |
-| 1 | Config, models, database | in_progress | Config validation, migration review, repository tests, demo seed success | Supabase optional for live path | Demo seed script still scaffold-level |
+| 1 | Config, models, database | completed | Config validation, migration review, repository tests, demo seed success | Supabase optional for live path | None |
 | 2 | Reddit collection | pending | Fixture crawler tests, idempotency, rate-limit capture, live verification only if creds exist | Reddit credentials for live verification | Awaiting credentials for live tests |
 | 3 | AI analysis | pending | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Awaiting credentials for live tests |
 | 4 | Analytics and views | pending | Metric fixtures match expected values; zero-volume/deleted exclusion behavior | None for demo; DB needed for live SQL execution | None |
@@ -204,7 +205,7 @@ All are deferred until demo-mode path is complete and validated locally.
 
 ---
 
-## Commands run and results (planning + Phase 0)
+## Commands run and results (planning + Phase 0/1)
 
 | Command | Result |
 |---|---|
@@ -231,6 +232,11 @@ All are deferred until demo-mode path is complete and validated locally.
 | `python3 scripts/smoke_test.py` | Passed (`status=success`) |
 | Added `.cursor/environment.json` and `.cursor/Dockerfile` to pre-provision Cloud Agent Python 3.12 + editable dev install | Completed |
 | `python3 -m json.tool .cursor/environment.json >/dev/null && python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest -q` | Passed (env config valid JSON; quality gates green) |
+| Implemented deterministic demo seeding module and CLI/script wiring (`src/reddit_intelligence/demo/seeding.py`) | Completed |
+| `python3 -m reddit_intelligence.cli seed-demo` | Passed; generated `data/demo/demo_dataset.csv` (1552 records), `data/demo/demo_run_history.csv` (180 runs), and `data/demo/demo_cost_metrics.json` |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (first run) | Failed format check (`seeding.py`, `test_demo_seeding.py`) |
+| `python3 -m ruff format .` | Applied formatting fixes |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (second run) | Passed; 12 tests, total coverage 85%, smoke test passed |
 
 ---
 
@@ -300,11 +306,20 @@ All are deferred until demo-mode path is complete and validated locally.
 - `tests/unit/test_migration_schema.py` (created)
 - `.cursor/environment.json` (created; Cloud Agent repo-level env config)
 - `.cursor/Dockerfile` (created; Python 3.12 base image + core OS deps)
+- `src/reddit_intelligence/demo/__init__.py` (created)
+- `src/reddit_intelligence/demo/seeding.py` (created)
+- `src/reddit_intelligence/cli.py` (updated with deterministic `seed-demo` command)
+- `scripts/seed_demo.py` (updated to generate deterministic artifacts)
+- `scripts/smoke_test.py` (updated to validate demo artifact generation)
+- `tests/unit/test_demo_seeding.py` (created)
+- `data/demo/demo_dataset.csv` (updated with deterministic 90-day dataset)
+- `data/demo/demo_run_history.csv` (created)
+- `data/demo/demo_cost_metrics.json` (created)
 
 ---
 
 ## Next action
 
-1. Complete remaining Phase 1 item: implement deterministic demo seeding with realistic 90-day synthetic data.
-2. Add deeper repository integration tests (payload mapping + stale-analysis transitions).
-3. Proceed to Phase 2 Reddit collection implementation after Phase 1 acceptance is fully satisfied.
+1. Begin Phase 2 Reddit collection implementation: PRAW client adapter, mapper, and collector skeleton with fixture-first tests.
+2. Implement cleaning/relevance/hash pipeline modules and incremental crawl orchestration.
+3. Add retry/rate-limit/run logging tests and keep live verification deferred until credentials are available.

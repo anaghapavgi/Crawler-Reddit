@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
@@ -12,6 +13,7 @@ from reddit_intelligence.config import (
     load_taxonomy_config,
     missing_required_env_vars,
 )
+from reddit_intelligence.demo.seeding import write_demo_artifacts
 from reddit_intelligence.logging_config import configure_logging
 from reddit_intelligence.pipeline import run_demo_pipeline
 
@@ -60,9 +62,23 @@ def init_db() -> None:
 
 
 @app.command("seed-demo")
-def seed_demo() -> None:
-    """Seed deterministic demo fixture scaffold."""
-    typer.echo("Demo seed scaffold complete.")
+def seed_demo(
+    days: Annotated[int, typer.Option(min=90)] = 90,
+    seed: Annotated[int, typer.Option()] = 42,
+    output_dir: Annotated[Path, typer.Option()] = Path("data/demo"),
+) -> None:
+    """Generate deterministic demo fixtures for local dashboard runs."""
+    try:
+        result = write_demo_artifacts(output_dir=output_dir, days=days, seed=seed)
+    except Exception as exc:
+        typer.echo(f"Demo seed failed: {exc}")
+        raise typer.Exit(code=1) from exc
+    typer.echo(
+        "Demo seed complete: "
+        f"records={result.record_count}, runs={result.run_count}, days={result.days}, "
+        f"dataset={result.records_path}, run_history={result.runs_path}, "
+        f"metrics={result.metrics_path}"
+    )
 
 
 @app.command("crawl")
