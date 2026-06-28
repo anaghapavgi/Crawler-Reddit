@@ -242,6 +242,13 @@ All are deferred until demo-mode path is complete and validated locally.
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (second run after Phase 2 edits) | Failed lint line-length in `cli.py` |
 | Updated `cli.py` output formatting for lint compliance | Fix applied |
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (third run after Phase 2 edits) | Passed; 24 tests, total coverage 83%, smoke test passed |
+| Added crawl-run persistence hooks (`InMemoryRunRepository`), deletion-sync integration module, and expanded error classification coverage | Completed |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (first run after hook updates) | Failed format check (`test_reddit_collector_errors.py`) |
+| `python3 -m ruff format .` | Applied formatting fix |
+| `python3 -m ruff check . --fix` | Applied import-order fixes; line-length issue remained in `cli.py` |
+| Updated `cli.py` crawl output string wrapping for lint compliance | Fix applied |
+| Updated `db/repositories.py` metric parsing helpers (`_as_int`, `_as_float`) to satisfy MyPy strict typing | Fix applied |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (second run after hook updates) | Passed; 31 tests, total coverage 83%, smoke test passed |
 
 ---
 
@@ -337,11 +344,23 @@ All are deferred until demo-mode path is complete and validated locally.
 - `tests/unit/test_relevance.py` (created)
 - `tests/unit/test_reddit_mapper.py` (created)
 - `tests/integration/test_reddit_collector.py` (created)
+- `src/reddit_intelligence/reddit/deletion_sync.py` (created)
+- `src/reddit_intelligence/models.py` (updated with `CrawlRunRecord`, `DeletionEvent`, run status types)
+- `src/reddit_intelligence/db/repositories.py` (updated with run repository protocol/in-memory implementation and typed metric parsing)
+- `src/reddit_intelligence/db/__init__.py` (updated exports for run repository classes)
+- `src/reddit_intelligence/reddit/collector.py` (updated run hooks, deletion event recording, expanded error categorization)
+- `src/reddit_intelligence/reddit/__init__.py` (updated exports for deletion sync)
+- `src/reddit_intelligence/cli.py` (updated crawl flow with run repository + deletion sync integration)
+- `tests/unit/test_run_repository.py` (created)
+- `tests/unit/test_reddit_collector_errors.py` (created)
+- `tests/unit/test_deletion_sync.py` (created)
+- `tests/integration/test_reddit_collector.py` (updated for run persistence/deletion sync assertions)
+- `tests/unit/test_repositories.py` (updated iterator/count helper coverage)
 
 ---
 
 ## Next action
 
-1. Complete remaining Phase 2 items: crawl-run persistence hooks, deletion sync integration points, and broader error-category coverage.
-2. Add selective live verification checklist entries marked `AWAITING_CREDENTIALS` for Reddit OAuth crawling.
-3. Begin Phase 3 AI analysis foundations after final Phase 2 acceptance review.
+1. Mark Reddit OAuth live verification as `AWAITING_CREDENTIALS` in final verification artifacts and keep demo-mode path as default.
+2. Proceed to Phase 3 AI analysis foundations (provider abstraction, schemas/prompts, baseline sentiment integration, budget guard skeleton).
+3. Add malformed-output and prompt-injection fixture tests as part of Phase 3 entry.
