@@ -229,6 +229,8 @@ All are deferred until demo-mode path is complete and validated locally.
 | Updated `_load_streamlit_secrets()` to safely return empty mapping when no Streamlit secrets are configured | Fix applied |
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest -q && python3 -m reddit_intelligence.cli verify-env` (second run) | All checks passed; 9 tests passed; verify-env succeeded |
 | `python3 scripts/smoke_test.py` | Passed (`status=success`) |
+| Added `.cursor/environment.json` and `.cursor/Dockerfile` to pre-provision Cloud Agent Python 3.12 + editable dev install | Completed |
+| `python3 -m json.tool .cursor/environment.json >/dev/null && python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest -q` | Passed (env config valid JSON; quality gates green) |
 
 ---
 
@@ -296,6 +298,8 @@ All are deferred until demo-mode path is complete and validated locally.
 - `tests/unit/test_config.py` (created)
 - `tests/unit/test_repositories.py` (created)
 - `tests/unit/test_migration_schema.py` (created)
+- `.cursor/environment.json` (created; Cloud Agent repo-level env config)
+- `.cursor/Dockerfile` (created; Python 3.12 base image + core OS deps)
 
 ---
 

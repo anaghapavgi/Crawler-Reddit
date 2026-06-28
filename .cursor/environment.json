@@ -1,0 +1,9 @@
+{
+  "name": "reddit-product-intelligence-py312",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "install": "python3 -m pip install --upgrade pip && python3 -m pip install -e '.[dev]'",
+  "start": "python3 --version && python3 -m pip --version"
+}
