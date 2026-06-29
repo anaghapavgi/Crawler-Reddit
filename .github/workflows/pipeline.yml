@@ -3,6 +3,14 @@ name: Pipeline
 on:
   workflow_dispatch:
     inputs:
+      demo_mode:
+        description: "Run in demo mode (recommended default)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
       crawl_days:
         description: "Days window for crawl command"
         required: false
@@ -25,7 +33,13 @@ jobs:
     timeout-minutes: 35
     env:
       APP_ENV: ci
-      DEMO_MODE: "true"
+      REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+      REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+      REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      AI_MODEL: ${{ secrets.AI_MODEL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,31 +58,61 @@ jobs:
       - name: Resolve runtime input defaults
         id: runtime-inputs
         run: |
+          DEMO_MODE="${{ github.event.inputs.demo_mode }}"
           CRAWL_DAYS="${{ github.event.inputs.crawl_days }}"
           ANALYZE_LIMIT="${{ github.event.inputs.analyze_limit }}"
+          if [ -z "$DEMO_MODE" ]; then DEMO_MODE="true"; fi
           if [ -z "$CRAWL_DAYS" ]; then CRAWL_DAYS="30"; fi
           if [ -z "$ANALYZE_LIMIT" ]; then ANALYZE_LIMIT="100"; fi
+          echo "demo_mode=$DEMO_MODE" >> "$GITHUB_OUTPUT"
           echo "crawl_days=$CRAWL_DAYS" >> "$GITHUB_OUTPUT"
           echo "analyze_limit=$ANALYZE_LIMIT" >> "$GITHUB_OUTPUT"
 
+      - name: Validate live mode secret requirements
+        if: ${{ steps.runtime-inputs.outputs.demo_mode == 'false' }}
+        run: |
+          missing=""
+          for var_name in REDDIT_CLIENT_ID REDDIT_CLIENT_SECRET REDDIT_USER_AGENT SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY OPENAI_API_KEY AI_MODEL; do
+            if [ -z "${!var_name:-}" ]; then
+              missing="$missing $var_name"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "Missing required secrets for live mode:$missing" >&2
+            exit 1
+          fi
+
       - name: Verify environment
+        env:
+          DEMO_MODE: ${{ steps.runtime-inputs.outputs.demo_mode }}
         run: python -m reddit_intelligence.cli verify-env
 
       - name: Seed demo fixtures
+        if: ${{ steps.runtime-inputs.outputs.demo_mode == 'true' }}
+        env:
+          DEMO_MODE: ${{ steps.runtime-inputs.outputs.demo_mode }}
         run: python -m reddit_intelligence.cli seed-demo --days 90 --seed 42
 
       - name: Run crawl stage
+        env:
+          DEMO_MODE: ${{ steps.runtime-inputs.outputs.demo_mode }}
         run: >
           python -m reddit_intelligence.cli crawl --mode incremental
           --days "${{ steps.runtime-inputs.outputs.crawl_days }}"
 
       - name: Run analysis stage
+        env:
+          DEMO_MODE: ${{ steps.runtime-inputs.outputs.demo_mode }}
         run: >
           python -m reddit_intelligence.cli analyze
           --limit "${{ steps.runtime-inputs.outputs.analyze_limit }}"
 
       - name: Run aggregate stage
+        env:
+          DEMO_MODE: ${{ steps.runtime-inputs.outputs.demo_mode }}
         run: python -m reddit_intelligence.cli aggregate --days 30
 
       - name: Process retry queue
+        env:
+          DEMO_MODE: ${{ steps.runtime-inputs.outputs.demo_mode }}
         run: python -m reddit_intelligence.cli retry-failures --stage analysis --limit 50
