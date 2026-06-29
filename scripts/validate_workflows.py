@@ -12,6 +12,49 @@ WORKFLOW_FILES: tuple[str, ...] = (
     ".github/workflows/daily-maintenance.yml",
 )
 
+REQUIRED_JOB_TIMEOUT_BOUNDS: dict[str, dict[str, tuple[int, int]]] = {
+    "ci.yml": {"quality-gates": (10, 30)},
+    "pipeline.yml": {"run-pipeline": (15, 45)},
+    "daily-maintenance.yml": {"maintenance": (10, 30)},
+}
+
+REQUIRED_JOB_STEPS: dict[str, dict[str, tuple[str, ...]]] = {
+    "ci.yml": {
+        "quality-gates": (
+            "Checkout",
+            "Setup Python",
+            "Install dependencies",
+            "Validate workflow definitions",
+            "Ruff format check",
+            "Ruff lint check",
+            "MyPy type check",
+            "Pytest with coverage",
+            "Smoke test",
+        )
+    },
+    "pipeline.yml": {
+        "run-pipeline": (
+            "Resolve runtime input defaults",
+            "Validate live mode secret requirements",
+            "Verify environment",
+            "Run crawl stage",
+            "Run analysis stage",
+            "Run aggregate stage",
+            "Process retry queue",
+        )
+    },
+    "daily-maintenance.yml": {
+        "maintenance": (
+            "Resolve runtime input defaults",
+            "Validate live mode secret requirements",
+            "Verify environment",
+            "Sync deletion events",
+            "Retry queued failures",
+            "Refresh aggregate snapshot",
+        )
+    },
+}
+
 
 def _mapping(value: object) -> dict[object, object] | None:
     if isinstance(value, dict):
@@ -26,6 +69,20 @@ def _get_mapping_key(mapping: dict[object, object], key: str) -> object | None:
     if key == "on" and True in mapping:
         return mapping[True]
     return None
+
+
+def _step_names(steps_value: object) -> set[str] | None:
+    if not isinstance(steps_value, list):
+        return None
+    names: set[str] = set()
+    for step in steps_value:
+        step_mapping = _mapping(step)
+        if step_mapping is None:
+            continue
+        step_name = step_mapping.get("name")
+        if isinstance(step_name, str) and step_name.strip():
+            names.add(step_name)
+    return names
 
 
 def load_workflow_yaml(path: Path) -> dict[object, object]:
@@ -101,6 +158,39 @@ def validate_workflow_payload(name: str, payload: dict[object, object]) -> list[
                         str(item) for item in options
                     }:
                         errors.append(f"{name}: demo_mode options must include 'true' and 'false'")
+
+    if isinstance(jobs, dict):
+        timeout_requirements = REQUIRED_JOB_TIMEOUT_BOUNDS.get(name, {})
+        for job_name, (minimum, maximum) in timeout_requirements.items():
+            job_payload = _mapping(jobs.get(job_name))
+            if job_payload is None:
+                errors.append(f"{name}: required job '{job_name}' is missing")
+                continue
+            timeout_value = job_payload.get("timeout-minutes")
+            if not isinstance(timeout_value, int):
+                errors.append(f"{name}: job '{job_name}' timeout-minutes must be an integer")
+                continue
+            if not (minimum <= timeout_value <= maximum):
+                errors.append(
+                    f"{name}: job '{job_name}' timeout-minutes must be between "
+                    f"{minimum} and {maximum}"
+                )
+
+        step_requirements = REQUIRED_JOB_STEPS.get(name, {})
+        for job_name, required_steps in step_requirements.items():
+            job_payload = _mapping(jobs.get(job_name))
+            if job_payload is None:
+                errors.append(f"{name}: required job '{job_name}' is missing")
+                continue
+            available_steps = _step_names(job_payload.get("steps"))
+            if available_steps is None:
+                errors.append(f"{name}: job '{job_name}' steps must be a list")
+                continue
+            for required_step in required_steps:
+                if required_step not in available_steps:
+                    errors.append(
+                        f"{name}: job '{job_name}' missing required step '{required_step}'"
+                    )
 
     return errors
 

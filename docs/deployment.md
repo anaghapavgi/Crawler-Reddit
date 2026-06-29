@@ -26,6 +26,9 @@ Quality gates:
 5. `pytest --cov=src/reddit_intelligence --cov-report=term-missing`
 6. `python scripts/smoke_test.py`
 
+Workflow validation currently checks file presence, core structure, concurrency controls,
+timeout bounds, and critical step coverage for operational jobs.
+
 ### `pipeline.yml`
 
 Purpose: run crawl/analyze/aggregate/retry stages.

@@ -63,7 +63,9 @@ Add repository secrets:
 Then:
 
 - [ ] Run CI manually or via a push.
-- [ ] Run the pipeline with `workflow_dispatch`.
+- [ ] Run `pipeline.yml` with `workflow_dispatch` using `demo_mode=true` first.
+- [ ] Run `daily-maintenance.yml` with `workflow_dispatch` using `demo_mode=true` first.
+- [ ] Switch to `demo_mode=false` only after required secrets are configured.
 - [ ] Inspect the database run records.
 - [ ] Enable scheduled workflows.
 - [ ] Confirm no overlapping runs.

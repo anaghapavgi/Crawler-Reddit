@@ -14,9 +14,11 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 - Acceptance gate for current phase:
   - `ci.yml`, `pipeline.yml`, and `daily-maintenance.yml` authored with schedules, timeouts, and concurrency controls ✅
   - workflow static validation script added and wired into CI (`scripts/validate_workflows.py`) ✅
+  - workflow validator enforces timeout bounds and critical step coverage for operational jobs ✅
   - workflow dispatch defaults preserved in demo mode (`demo_mode=true`) ✅
   - live-mode workflow secret guards added for pipeline and maintenance runs ✅
   - deployment/troubleshooting docs updated with workflow behavior, secrets matrix, runbook, and export verification guidance ✅
+  - manual setup docs/checklist aligned with new live-mode workflow guard behavior ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -275,6 +277,8 @@ All are deferred until demo-mode path is complete and validated locally.
 | Expanded deployment/troubleshooting docs with workflow behavior and Explorer CSV verification guidance | Completed |
 | Added workflow validation script and CI gate (`scripts/validate_workflows.py`, `.github/workflows/ci.yml`) plus unit coverage (`test_validate_workflows.py`) | Completed |
 | Expanded deployment docs with mode/secret matrix and README runbook dispatch examples | Completed |
+| Hardened workflow validator with timeout-bound and critical-step checks (`scripts/validate_workflows.py`, `test_validate_workflows.py`) | Completed |
+| Aligned manual setup docs/checklist with workflow `demo_mode` dispatch defaults and live-mode guard requirements | Completed |
 
 ---
 
@@ -458,15 +462,17 @@ All are deferred until demo-mode path is complete and validated locally.
 - `.github/workflows/ci.yml` (updated to run workflow validation script)
 - `docs/deployment.md` (updated with workflow and CSV-export verification guidance)
 - `docs/troubleshooting.md` (updated with CI/live-mode/export troubleshooting guidance)
-- `README.md` (updated with workflow runbook quick commands)
-- `scripts/validate_workflows.py` (created with static workflow structure/policy checks)
-- `tests/unit/test_validate_workflows.py` (created)
+- `README.md` (updated with Phase 6 status summary and workflow runbook quick commands)
+- `scripts/validate_workflows.py` (created, then updated with timeout-bound and critical-step policy checks)
+- `tests/unit/test_validate_workflows.py` (created, then updated with timeout/step guard tests)
+- `docs/manual-setup.md` (updated with live-mode secret list and dispatch guard guidance)
+- `MANUAL_SETUP_CHECKLIST.md` (updated with demo-mode-first and live-mode dispatch checklist items)
 - `pyproject.toml` (updated MyPy target version to Python 3.12 for CI compatibility)
 
 ---
 
 ## Next action
 
-1. Add CI workflow runbook links to `README.md` current-status section and align status text with Phase 6 progress.
-2. Add additional workflow validation checks for required timeout bounds and critical step names in `scripts/validate_workflows.py`.
-3. Continue Phase 6 with manual setup docs alignment (`docs/manual-setup.md`, `MANUAL_SETUP_CHECKLIST.md`) for new live-mode workflow guards.
+1. Add a compact Phase 6 verification section in `docs/verification-report.md` with workflow validation evidence.
+2. Expand workflow validation to assert `python-version: 3.12` consistency across workflow jobs.
+3. Begin Phase 7 hardening checklist updates (compliance and final QA evidence scaffolding).

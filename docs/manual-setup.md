@@ -52,7 +52,16 @@ The following implementation and verification tasks can be completed locally in 
 - Keep conservative budget settings.
 
 ### GitHub Actions runtime
-- Configure repository secrets for pipeline workflows.
+- Configure repository secrets for live-mode pipeline workflows:
+  - `REDDIT_CLIENT_ID`
+  - `REDDIT_CLIENT_SECRET`
+  - `REDDIT_USER_AGENT`
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `OPENAI_API_KEY`
+  - `AI_MODEL`
+- Use manual workflow dispatch defaults (`demo_mode=true`) for safe dry runs.
+- Use `demo_mode=false` only after secrets are configured; workflow guards fail fast when missing.
 - Manually run `workflow_dispatch` and verify run artifacts/logs.
 - Enable schedules after manual validation.
 
