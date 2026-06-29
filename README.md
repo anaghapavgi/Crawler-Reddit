@@ -54,6 +54,10 @@ Credential and deployment steps are documented in:
 - `MANUAL_SETUP_CHECKLIST.md`
 - `docs/manual-setup.md`
 
+Verification and compliance references:
+- `docs/verification-report.md`
+- `docs/privacy-and-compliance.md`
+
 ## Workflow runbook quick commands
 
 Use these for manual GitHub workflow dispatch via `gh` CLI.

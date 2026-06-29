@@ -77,3 +77,36 @@ def test_daily_maintenance_requires_critical_steps() -> None:
         "daily-maintenance.yml: job 'maintenance' missing required step "
         "'Validate live mode secret requirements'"
     ) in errors
+
+
+def test_ci_requires_setup_python_312() -> None:
+    payload: dict[object, object] = {
+        "name": "CI",
+        "on": {"pull_request": {"branches": ["main"]}},
+        "concurrency": {"group": "ci-main", "cancel-in-progress": True},
+        "jobs": {
+            "quality-gates": {
+                "timeout-minutes": 25,
+                "steps": [
+                    {"name": "Checkout"},
+                    {
+                        "name": "Setup Python",
+                        "uses": "actions/setup-python@v5",
+                        "with": {"python-version": "3.11"},
+                    },
+                    {"name": "Install dependencies"},
+                    {
+                        "name": "Validate workflow definitions",
+                        "run": "python scripts/validate_workflows.py",
+                    },
+                    {"name": "Ruff format check"},
+                    {"name": "Ruff lint check"},
+                    {"name": "MyPy type check"},
+                    {"name": "Pytest with coverage"},
+                    {"name": "Smoke test"},
+                ],
+            }
+        },
+    }
+    errors = validate_workflows.validate_workflow_payload("ci.yml", payload)
+    assert "ci.yml: job 'quality-gates' step 'Setup Python' python-version must be '3.12'" in errors

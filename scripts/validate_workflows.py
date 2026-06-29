@@ -55,6 +55,12 @@ REQUIRED_JOB_STEPS: dict[str, dict[str, tuple[str, ...]]] = {
     },
 }
 
+REQUIRED_PYTHON_VERSION_BY_JOB: dict[str, dict[str, str]] = {
+    "ci.yml": {"quality-gates": "3.12"},
+    "pipeline.yml": {"run-pipeline": "3.12"},
+    "daily-maintenance.yml": {"maintenance": "3.12"},
+}
+
 
 def _mapping(value: object) -> dict[object, object] | None:
     if isinstance(value, dict):
@@ -83,6 +89,20 @@ def _step_names(steps_value: object) -> set[str] | None:
         if isinstance(step_name, str) and step_name.strip():
             names.add(step_name)
     return names
+
+
+def _find_named_step(steps_value: object, step_name: str) -> dict[object, object] | None:
+    """Find a step mapping by its `name` field."""
+    if not isinstance(steps_value, list):
+        return None
+    for step in steps_value:
+        step_mapping = _mapping(step)
+        if step_mapping is None:
+            continue
+        current_name = step_mapping.get("name")
+        if isinstance(current_name, str) and current_name == step_name:
+            return step_mapping
+    return None
 
 
 def load_workflow_yaml(path: Path) -> dict[object, object]:
@@ -191,6 +211,37 @@ def validate_workflow_payload(name: str, payload: dict[object, object]) -> list[
                     errors.append(
                         f"{name}: job '{job_name}' missing required step '{required_step}'"
                     )
+
+        python_requirements = REQUIRED_PYTHON_VERSION_BY_JOB.get(name, {})
+        for job_name, expected_python in python_requirements.items():
+            job_payload = _mapping(jobs.get(job_name))
+            if job_payload is None:
+                errors.append(f"{name}: required job '{job_name}' is missing")
+                continue
+            setup_python_step = _find_named_step(job_payload.get("steps"), "Setup Python")
+            if setup_python_step is None:
+                errors.append(f"{name}: job '{job_name}' missing required step 'Setup Python'")
+                continue
+            uses_value = setup_python_step.get("uses")
+            if not isinstance(uses_value, str) or not uses_value.startswith(
+                "actions/setup-python@"
+            ):
+                errors.append(
+                    f"{name}: job '{job_name}' step 'Setup Python' must use actions/setup-python"
+                )
+                continue
+            with_section = _mapping(setup_python_step.get("with"))
+            if with_section is None:
+                errors.append(
+                    f"{name}: job '{job_name}' step 'Setup Python' must define 'with' mapping"
+                )
+                continue
+            python_value = with_section.get("python-version")
+            if str(python_value) != expected_python:
+                errors.append(
+                    f"{name}: job '{job_name}' step 'Setup Python' python-version must be "
+                    f"'{expected_python}'"
+                )
 
     return errors
 
