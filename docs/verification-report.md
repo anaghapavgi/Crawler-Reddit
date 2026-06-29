@@ -63,6 +63,45 @@ with real credentials.
 - Deployment/runtime secret guard behavior: `docs/deployment.md`
 - Failure handling and incident workflow: `docs/troubleshooting.md`
 
+## Phase 7 DoD status summary (validated vs awaiting)
+
+Status legend:
+
+- `VALIDATED_DEMO`: verified in local/demo mode with passing tests and/or commands
+- `AWAITING_CREDENTIALS`: requires live credentials/platform access not available in demo mode
+- `AWAITING_MANUAL_UI`: requires interactive visual/browser verification
+
+| Acceptance section | Current status | Notes |
+|---|---|---|
+| Installation and configuration | `VALIDATED_DEMO` | Demo bootstrap, env validation, and failure behavior covered by CLI/tests. |
+| Reddit collection | `VALIDATED_DEMO` + `AWAITING_CREDENTIALS` | Fixture/integration behavior validated; live OAuth execution pending credentials. |
+| Privacy and deletion | `VALIDATED_DEMO` | Deletion propagation and deleted-content exclusion are test-covered in repository and dashboard layers. |
+| AI analysis | `VALIDATED_DEMO` + `AWAITING_CREDENTIALS` | Schema/prompt/budget behaviors validated in deterministic mode; live provider verification pending. |
+| Analytics | `VALIDATED_DEMO` | Aggregate/trend/pipeline-health formulas validated against deterministic fixtures. |
+| Dashboard | `VALIDATED_DEMO` + `AWAITING_MANUAL_UI` | Page/filter/export helpers are test-covered; interactive multi-viewport visual pass requires browser execution. |
+| Automation and deployment | `VALIDATED_DEMO` + `AWAITING_CREDENTIALS` | Workflow policies are statically validated; live scheduled/secret-backed runs pending credentialed dispatch. |
+| Quality | `VALIDATED_DEMO` | Ruff/MyPy/Pytest/coverage/smoke pass in latest local evidence run. |
+
+## Manual dashboard verification evidence notes
+
+Desktop and narrow-width manual verification target:
+
+- desktop viewport: all pages render and filter interactions remain stable
+- narrow-width viewport: layout remains usable without blocking core actions
+
+Current evidence:
+
+1. Non-visual dashboard behavior covered by unit tests:
+   - `tests/unit/test_dashboard_pages.py`
+   - `tests/unit/test_dashboard_data_access.py`
+2. Data/aggregation behavior covered by analytics tests and CLI smoke path.
+3. CSV sanitization behavior covered by unit tests and deployment runbook.
+
+Pending manual evidence:
+
+- interactive browser pass for desktop and narrow-width layouts in Streamlit runtime
+- capture operator notes for page-by-page UI behavior under filtered and empty-state conditions
+
 ## Live integration verification status
 
 - Reddit OAuth + PRAW live verification: **AWAITING_CREDENTIALS**
