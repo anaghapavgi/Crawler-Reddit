@@ -19,11 +19,12 @@ Runs on pushes to `main` and `cursor/**`, plus pull requests targeting `main`.
 
 Quality gates:
 
-1. `ruff format --check .`
-2. `ruff check .`
-3. `mypy src`
-4. `pytest --cov=src/reddit_intelligence --cov-report=term-missing`
-5. `python scripts/smoke_test.py`
+1. `python scripts/validate_workflows.py`
+2. `ruff format --check .`
+3. `ruff check .`
+4. `mypy src`
+5. `pytest --cov=src/reddit_intelligence --cov-report=term-missing`
+6. `python scripts/smoke_test.py`
 
 ### `pipeline.yml`
 
@@ -61,6 +62,67 @@ required secrets before runtime commands execute:
 - `AI_MODEL`
 
 Missing live-mode secrets fail fast with a clear error message.
+
+## Secrets matrix by mode and command
+
+| Command / Workflow Stage | Demo mode (`DEMO_MODE=true`) | Live mode (`DEMO_MODE=false`) |
+|---|---|---|
+| `python -m reddit_intelligence.cli verify-env` | No external secrets required; reports missing live secrets as expected | Requires Reddit + Supabase (+ OpenAI when `AI_PROVIDER=openai`) |
+| `python -m reddit_intelligence.cli crawl` | Uses fixture data; no secrets required | Requires `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` |
+| `python -m reddit_intelligence.cli analyze` | Uses deterministic demo provider; no secrets required | Requires `OPENAI_API_KEY`, `AI_MODEL` when OpenAI path enabled |
+| `python -m reddit_intelligence.cli aggregate` | Uses demo CSV/in-memory state | Requires Supabase credentials for live SQL-view path |
+| `pipeline.yml` manual dispatch | Default path (`demo_mode=true`) does not require live secrets | Guard requires all listed live secrets before execution |
+| `daily-maintenance.yml` manual dispatch | Default path (`demo_mode=true`) does not require live secrets | Guard requires all listed live secrets before execution |
+
+Live-mode secrets currently expected by workflow guards:
+
+- `REDDIT_CLIENT_ID`
+- `REDDIT_CLIENT_SECRET`
+- `REDDIT_USER_AGENT`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `OPENAI_API_KEY`
+- `AI_MODEL`
+
+## Operator runbook: manual dispatch examples
+
+### Demo-mode dispatch (safe default)
+
+Pipeline workflow:
+
+1. GitHub UI -> Actions -> **Pipeline** -> **Run workflow**
+2. Set:
+   - `demo_mode=true`
+   - optionally adjust `crawl_days` / `analyze_limit`
+3. Run workflow.
+
+Equivalent GitHub CLI example:
+
+```bash
+gh workflow run pipeline.yml -f demo_mode=true -f crawl_days=30 -f analyze_limit=100
+```
+
+Maintenance workflow:
+
+```bash
+gh workflow run daily-maintenance.yml -f demo_mode=true
+```
+
+### Live-mode dispatch (credentialed)
+
+Before running:
+
+1. Confirm all required repository secrets are present.
+2. Ensure live credentials are valid and rotated according to policy.
+
+Dispatch examples:
+
+```bash
+gh workflow run pipeline.yml -f demo_mode=false -f crawl_days=30 -f analyze_limit=100
+gh workflow run daily-maintenance.yml -f demo_mode=false
+```
+
+If secrets are incomplete, workflow guard checks fail immediately with a missing-secrets list.
 
 ## Explorer CSV export verification
 

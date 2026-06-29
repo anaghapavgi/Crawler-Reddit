@@ -2,6 +2,21 @@
 
 ## CI failures
 
+### `scripts/validate_workflows.py` fails
+
+Cause:
+
+- workflow YAML syntax issues
+- missing required workflow policy fields (e.g., concurrency controls, `demo_mode` inputs)
+- CI workflow no longer runs workflow validation step
+
+Resolution:
+
+1. Run locally:
+   - `python3 scripts/validate_workflows.py`
+2. Fix reported workflow YAML issues.
+3. Re-run quality gates.
+
 ### MyPy fails in GitHub Actions with NumPy stub syntax errors
 
 Symptom example:

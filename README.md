@@ -52,3 +52,19 @@ python scripts/smoke_test.py
 Credential and deployment steps are documented in:
 - `MANUAL_SETUP_CHECKLIST.md`
 - `docs/manual-setup.md`
+
+## Workflow runbook quick commands
+
+Use these for manual GitHub workflow dispatch via `gh` CLI.
+
+```bash
+# Demo mode (safe default)
+gh workflow run pipeline.yml -f demo_mode=true -f crawl_days=30 -f analyze_limit=100
+gh workflow run daily-maintenance.yml -f demo_mode=true
+
+# Live mode (requires configured repository secrets)
+gh workflow run pipeline.yml -f demo_mode=false -f crawl_days=30 -f analyze_limit=100
+gh workflow run daily-maintenance.yml -f demo_mode=false
+```
+
+See `docs/deployment.md` for the full mode/secret matrix and operational guidance.
