@@ -1,8 +1,8 @@
 # BUILD_STATUS
 
-Last updated: 2026-06-28 (UTC)  
+Last updated: 2026-06-29 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Phase 0/1/2/3/4 completed (demo); Phase 5 in progress  
+Mode: Phase 0/1/2/3/4 completed (demo); Phase 5 in progress; Phase 6 started  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
@@ -16,6 +16,9 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
   - shared sidebar page navigation + filter state wiring implemented ✅
   - dashboard data-access cache/filter helpers and empty-state behavior tested ✅
   - live SQL adapter pagination bounds covered by mocked integration-style unit tests ✅
+  - richer page visuals added (Plotly charts + comparison cards across overview/sentiment/features/segments/trends/pipeline-health) ✅
+  - explorer CSV export path implemented with formula-injection sanitization checks ✅
+  - evidence snippets surfaced in assistant/pain-point workflows with bounded filtered rows ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -31,7 +34,7 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 | 3 | AI analysis | completed | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Live OpenAI verification awaiting credentials |
 | 4 | Analytics and views | completed | Metric fixtures match expected values; zero-volume/deleted exclusion behavior | None for demo; DB needed for live SQL execution | None |
 | 5 | Dashboard | in_progress | All pages render in demo mode; filters, export, empty states, browser verification | Streamlit runtime; optional live DB | None |
-| 6 | Scheduling and deployment | pending | Workflow YAML valid; dispatch/concurrency/timeouts/schedules correct | GitHub repo settings/secrets; Streamlit Cloud setup | Awaiting manual platform setup |
+| 6 | Scheduling and deployment | in_progress | Workflow YAML valid; dispatch/concurrency/timeouts/schedules correct | GitHub repo settings/secrets; Streamlit Cloud setup | Awaiting manual platform setup |
 | 7 | Compliance, hardening, final QA | pending | Full checks pass; secret hygiene; clean demo launch; DoD checklist complete | Credentials required for live end-to-end verification | Awaiting credentials and platform access |
 
 ---
@@ -266,6 +269,9 @@ All are deferred until demo-mode path is complete and validated locally.
 | Scaffolded Phase 5 dashboard pages and page registry (`dashboard/pages/*.py`) with shared navigation and filter application in `dashboard/app.py` | Completed |
 | Added dashboard-focused tests (`test_dashboard_data_access.py`, `test_dashboard_pages.py`) and live SQL adapter bounds tests in `test_analytics_data_access.py` | Completed |
 | `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (after Phase 5 page/filter wiring) | Passed; 68 tests, total coverage 85%, smoke test passed |
+| Enhanced Phase 5 page renderers with Plotly visuals/comparison cards and evidence snippets (`dashboard/pages/*.py`) | Completed |
+| Added explorer CSV sanitization helpers and unit tests (`test_dashboard_pages.py`) for formula-like cell safety | Completed |
+| Started Phase 6 workflow authoring (`.github/workflows/ci.yml`, `pipeline.yml`, `daily-maintenance.yml`) with schedules, concurrency, and timeout bounds | Completed |
 
 ---
 
@@ -431,11 +437,24 @@ All are deferred until demo-mode path is complete and validated locally.
 - `tests/unit/test_dashboard_data_access.py` (created)
 - `tests/unit/test_dashboard_pages.py` (created)
 - `tests/unit/test_analytics_data_access.py` (updated with mocked live adapter pagination bounds tests)
+- `src/reddit_intelligence/dashboard/pages/overview.py` (updated with comparison cards + Plotly theme chart)
+- `src/reddit_intelligence/dashboard/pages/sentiment.py` (updated with weighted sentiment trend chart)
+- `src/reddit_intelligence/dashboard/pages/pain_points.py` (updated with segment chart + evidence snippets)
+- `src/reddit_intelligence/dashboard/pages/features.py` (updated with feature negative-rate chart)
+- `src/reddit_intelligence/dashboard/pages/segments.py` (updated with segment scatter comparison)
+- `src/reddit_intelligence/dashboard/pages/trends.py` (updated with prior-window cards + sentiment mix chart)
+- `src/reddit_intelligence/dashboard/pages/pipeline_health.py` (updated with status cards + distribution chart)
+- `src/reddit_intelligence/dashboard/pages/assistant.py` (updated with bounded evidence snippet table helper)
+- `src/reddit_intelligence/dashboard/pages/explorer.py` (updated with CSV download and sanitization helpers)
+- `tests/unit/test_dashboard_pages.py` (updated with CSV sanitization and assistant evidence helper tests)
+- `.github/workflows/ci.yml` (created)
+- `.github/workflows/pipeline.yml` (created)
+- `.github/workflows/daily-maintenance.yml` (created)
 
 ---
 
 ## Next action
 
-1. Implement richer page visuals (Plotly charts, comparison cards, and evidence snippets) across Phase 5 page modules.
-2. Add CSV export path and sanitization checks for Explorer output.
-3. Start Phase 6 workflow authoring (`.github/workflows/ci.yml`, `pipeline.yml`, `daily-maintenance.yml`) with schedule/concurrency constraints.
+1. Run full quality gates plus `python3 -m pytest tests/unit/test_dashboard_pages.py` and fix any regressions from Phase 5 visual/export updates.
+2. Add dashboard export verification notes and workflow behavior notes in `docs/deployment.md`/`docs/troubleshooting.md`.
+3. Continue Phase 6 by adding workflow-level guards for production/live mode (secrets + environment gating) while preserving demo defaults.

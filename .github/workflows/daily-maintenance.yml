@@ -1,0 +1,48 @@
+name: Daily Maintenance
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "45 3 * * *"
+
+concurrency:
+  group: daily-maintenance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  maintenance:
+    name: Deletions and retry maintenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_ENV: ci
+      DEMO_MODE: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Verify environment
+        run: python -m reddit_intelligence.cli verify-env
+
+      - name: Seed demo fixtures
+        run: python -m reddit_intelligence.cli seed-demo --days 90 --seed 42
+
+      - name: Sync deletion events
+        run: python -m reddit_intelligence.cli sync-deletions --days 14
+
+      - name: Retry queued failures
+        run: python -m reddit_intelligence.cli retry-failures --stage analysis --limit 100
+
+      - name: Refresh aggregate snapshot
+        run: python -m reddit_intelligence.cli aggregate --days 30
