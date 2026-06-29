@@ -2,23 +2,20 @@
 
 Last updated: 2026-06-29 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Phase 0/1/2/3/4 completed (demo); Phase 5 in progress; Phase 6 started  
+Mode: Phase 0/1/2/3/4 completed (demo); Phase 5 in progress; Phase 6 in progress  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
 ## Current overall status
 
 - Repository state: planning docs plus Phase 0 scaffold created (`src/`, `tests/`, `config/`, `data/`, `scripts/`, toolchain files).
-- Current phase: **Phase 5 - Dashboard**
+- Current phase: **Phase 6 - Scheduling and deployment**
 - Current phase status: **in_progress**
 - Acceptance gate for current phase:
-  - multipage dashboard modules scaffolded (overview/sentiment/pain points/features/segments/trends/explorer/assistant/pipeline-health) ✅
-  - shared sidebar page navigation + filter state wiring implemented ✅
-  - dashboard data-access cache/filter helpers and empty-state behavior tested ✅
-  - live SQL adapter pagination bounds covered by mocked integration-style unit tests ✅
-  - richer page visuals added (Plotly charts + comparison cards across overview/sentiment/features/segments/trends/pipeline-health) ✅
-  - explorer CSV export path implemented with formula-injection sanitization checks ✅
-  - evidence snippets surfaced in assistant/pain-point workflows with bounded filtered rows ✅
+  - `ci.yml`, `pipeline.yml`, and `daily-maintenance.yml` authored with schedules, timeouts, and concurrency controls ✅
+  - workflow dispatch defaults preserved in demo mode (`demo_mode=true`) ✅
+  - live-mode workflow secret guards added for pipeline and maintenance runs ✅
+  - deployment/troubleshooting docs updated with workflow behavior and export verification guidance ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -272,6 +269,9 @@ All are deferred until demo-mode path is complete and validated locally.
 | Enhanced Phase 5 page renderers with Plotly visuals/comparison cards and evidence snippets (`dashboard/pages/*.py`) | Completed |
 | Added explorer CSV sanitization helpers and unit tests (`test_dashboard_pages.py`) for formula-like cell safety | Completed |
 | Started Phase 6 workflow authoring (`.github/workflows/ci.yml`, `pipeline.yml`, `daily-maintenance.yml`) with schedules, concurrency, and timeout bounds | Completed |
+| Aligned MyPy target version with CI Python (`pyproject.toml` `python_version=3.12`) after CI syntax failure in dependency stubs | Completed |
+| Added live-mode workflow guards and dispatch controls (`pipeline.yml`, `daily-maintenance.yml`) while preserving demo defaults | Completed |
+| Expanded deployment/troubleshooting docs with workflow behavior and Explorer CSV verification guidance | Completed |
 
 ---
 
@@ -450,11 +450,16 @@ All are deferred until demo-mode path is complete and validated locally.
 - `.github/workflows/ci.yml` (created)
 - `.github/workflows/pipeline.yml` (created)
 - `.github/workflows/daily-maintenance.yml` (created)
+- `.github/workflows/pipeline.yml` (updated with `demo_mode` dispatch input + live secret guard)
+- `.github/workflows/daily-maintenance.yml` (updated with `demo_mode` dispatch input + live secret guard)
+- `docs/deployment.md` (updated with workflow and CSV-export verification guidance)
+- `docs/troubleshooting.md` (updated with CI/live-mode/export troubleshooting guidance)
+- `pyproject.toml` (updated MyPy target version to Python 3.12 for CI compatibility)
 
 ---
 
 ## Next action
 
-1. Run full quality gates plus `python3 -m pytest tests/unit/test_dashboard_pages.py` and fix any regressions from Phase 5 visual/export updates.
-2. Add dashboard export verification notes and workflow behavior notes in `docs/deployment.md`/`docs/troubleshooting.md`.
-3. Continue Phase 6 by adding workflow-level guards for production/live mode (secrets + environment gating) while preserving demo defaults.
+1. Add workflow validation checks (YAML lint/static checks) and include them in CI or documented pre-merge checks.
+2. Expand deployment docs with explicit secret-setup matrix (required vs optional by mode and command).
+3. Continue Phase 6 by adding manual-dispatch README/operator runbook examples for demo vs live runs.
