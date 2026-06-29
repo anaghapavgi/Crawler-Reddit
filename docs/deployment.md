@@ -142,3 +142,48 @@ Explorer CSV export now includes formula-injection sanitization. Verify with:
    - `-`
    - `@`
    - tab/carriage-return prefixed values
+
+## Phase 7 secret-hygiene verification checklist
+
+Use this checklist for each live-mode run (`demo_mode=false`) and before enabling schedules.
+
+### 1) Pre-run checks
+
+1. Confirm secrets are configured only as repository/environment secrets, never in tracked files:
+   - `REDDIT_CLIENT_ID`
+   - `REDDIT_CLIENT_SECRET`
+   - `REDDIT_USER_AGENT`
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `OPENAI_API_KEY`
+   - `AI_MODEL`
+2. Confirm `.env` is local-only and not tracked by git.
+3. Confirm `demo_mode=true` remains default for manual dispatch forms.
+
+### 2) In-run log review (GitHub Actions)
+
+After each run, inspect job logs and verify:
+
+1. No secret values are echoed (including partial or base64-encoded forms).
+2. Failure output lists only secret **names**, not values.
+3. `verify-env` output does not print credential values.
+4. Command invocations do not include inline secrets.
+
+Recommended checks:
+
+- Review logs in Actions UI for pipeline/maintenance jobs.
+- Search logs for suspicious key markers (`BEGIN PRIVATE`, `sk-`, `service_role`, `token=`).
+
+### 3) Post-run artifact review
+
+1. Confirm uploaded artifacts do not include `.env`, secret dumps, or raw credential snapshots.
+2. Confirm exported CSV/content artifacts contain only sanitized user-facing fields.
+3. Confirm no debug bundle includes process environment dumps.
+
+### 4) Rotation and incident response trigger
+
+Immediately rotate affected credentials and follow `docs/troubleshooting.md` incident steps if:
+
+- any plaintext credential appears in logs/artifacts;
+- a misconfigured run executed with secrets in command arguments; or
+- a debug artifact accidentally includes environment variables.
