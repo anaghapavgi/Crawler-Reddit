@@ -8,6 +8,7 @@ Cause:
 
 - workflow YAML syntax issues
 - missing required workflow policy fields (e.g., concurrency controls, `demo_mode` inputs)
+- missing required timeout bounds or critical operational step names
 - CI workflow no longer runs workflow validation step
 
 Resolution:

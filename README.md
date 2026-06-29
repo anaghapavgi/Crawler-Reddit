@@ -4,12 +4,13 @@ AI-powered Reddit review discovery and analytics application focused on product 
 
 ## Current status
 
-Phase 0 scaffold is in progress. The repository now includes:
+Phases 0-4 are implemented in demo mode, and Phase 6 workflow hardening is in progress. The
+repository now includes:
 - Python package configuration (`pyproject.toml`)
-- lint/type/test tooling setup
-- CLI skeleton
+- lint/type/test tooling setup plus CI workflow validation
+- CLI commands for crawl/analyze/aggregate/retry and demo seeding
 - project rule file under `.cursor/rules`
-- planning and architecture documentation
+- planning, architecture, deployment, and troubleshooting documentation
 
 See `BUILD_STATUS.md` for the authoritative phase tracker and command evidence.
 
