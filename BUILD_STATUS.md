@@ -13,10 +13,12 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 - Current phase status: **in_progress**
 - Acceptance gate for current phase:
   - Phase 7 QA execution matrix added, mapping acceptance checklist areas to commands/tests/evidence (`docs/verification-report.md`) ✅
+  - Phase 7 DoD status summary (`VALIDATED_DEMO` vs `AWAITING_*`) added (`docs/verification-report.md`) ✅
   - Phase 7 secret-hygiene verification checklist added for logs/artifacts and incident triggers (`docs/deployment.md`) ✅
   - Secret-exposure troubleshooting playbook documented with containment and recovery flow (`docs/troubleshooting.md`) ✅
   - Manual setup and acceptance checklist cross-reference section added (`docs/verification-report.md`) ✅
-  - Final full-gate verification run and evidence capture pending ⏳
+  - Manual dashboard verification evidence notes scaffolded for desktop + narrow-width pass (`docs/verification-report.md`) ✅
+  - Final full-gate verification run executed with evidence captured (`76 passed`, `82%` coverage, smoke success) ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -280,8 +282,10 @@ All are deferred until demo-mode path is complete and validated locally.
 | Added workflow validator checks for `Setup Python` version consistency (`python-version: 3.12`) and corresponding tests | Completed |
 | Added compact Phase 6 verification snapshot and Phase 7 evidence scaffolding docs (`docs/verification-report.md`, `docs/privacy-and-compliance.md`) | Completed |
 | Added Phase 7 QA execution matrix and acceptance/manual-setup cross-reference section (`docs/verification-report.md`) | Completed |
+| Added Phase 7 DoD status summary (`VALIDATED_DEMO` vs `AWAITING_*`) and manual dashboard verification evidence notes (`docs/verification-report.md`) | Completed |
 | Added Phase 7 secret-hygiene verification checklist for workflow logs/artifacts (`docs/deployment.md`) | Completed |
 | Added secret-exposure containment and recovery troubleshooting workflow (`docs/troubleshooting.md`) | Completed |
+| `python3 -m ruff format --check . && python3 -m ruff check . && python3 -m mypy src && python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing && python3 scripts/smoke_test.py` (latest full-gate rerun) | Passed; 76 tests, total coverage 82%, smoke test passed |
 
 ---
 
@@ -481,6 +485,6 @@ All are deferred until demo-mode path is complete and validated locally.
 
 ## Next action
 
-1. Run the full required quality gates and capture final command evidence for Phase 7.
-2. Finalize DoD assessment with explicit `validated` vs `AWAITING_CREDENTIALS` markers per acceptance section.
-3. Perform final manual dashboard verification pass (desktop + narrow width) and record evidence notes.
+1. Perform final interactive dashboard verification pass (desktop + narrow width) in a browser session and record operator evidence.
+2. Execute credentialed live verification steps (Reddit OAuth, Supabase, OpenAI, workflow live mode) once manual secrets setup is complete.
+3. Mark final DoD completion after manual UI and credentialed-live evidence are attached.
