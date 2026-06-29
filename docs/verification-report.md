@@ -28,6 +28,10 @@ Local validation commands last executed:
 6. `python3 -m pytest --cov=src/reddit_intelligence --cov-report=term-missing`
 7. `python3 scripts/smoke_test.py`
 
+Latest execution result:
+
+- PASS: `76 passed`, total coverage `82%`, smoke test status `success`.
+
 ## Phase 7 hardening evidence scaffold
 
 The following evidence blocks are completed/planned during Phase 7:
@@ -101,6 +105,8 @@ Pending manual evidence:
 
 - interactive browser pass for desktop and narrow-width layouts in Streamlit runtime
 - capture operator notes for page-by-page UI behavior under filtered and empty-state conditions
+- note: this cloud coding environment does not provide an interactive browser viewport, so
+  final layout validation remains an operator/manual step
 
 ## Live integration verification status
 
