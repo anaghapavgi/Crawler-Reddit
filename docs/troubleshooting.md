@@ -68,6 +68,38 @@ Resolution:
 - ensure secrets are set in the repository running the workflow
 - re-dispatch with `demo_mode=false` only after secrets are present
 
+### Suspected secret exposure in logs or artifacts
+
+Symptoms:
+
+- API keys, service role values, tokens, or connection strings appear in job logs.
+- Workflow artifacts include `.env`, shell history, or environment dumps.
+- Debug output contains unredacted provider credentials.
+
+Immediate containment:
+
+1. Stop re-running affected workflows until secrets are rotated.
+2. Rotate exposed credentials at provider side:
+   - Reddit app secret
+   - Supabase service role key
+   - OpenAI API key
+3. Remove or expire affected workflow artifacts where possible.
+4. Revoke any leaked tokens/sessions and reissue least-privilege credentials.
+
+Root-cause checklist:
+
+1. Check for accidental `echo`/print of env vars in workflow `run` blocks.
+2. Check for commands that pass secrets as CLI arguments rather than environment variables.
+3. Check for debug scripts dumping `os.environ` or full settings objects.
+4. Check for local `.env` files accidentally included in artifacts.
+
+Recovery validation:
+
+1. Run in `demo_mode=true` and verify no secrets are needed or printed.
+2. Re-run `python3 scripts/validate_workflows.py`.
+3. Re-run full quality gates locally.
+4. Re-dispatch live-mode workflow after rotation and confirm logs are clean.
+
 ## Dashboard Explorer export issues
 
 ### Exported CSV looks "prefixed" with single quotes

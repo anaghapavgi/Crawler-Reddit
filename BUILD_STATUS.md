@@ -2,24 +2,21 @@
 
 Last updated: 2026-06-29 (UTC)  
 Branch: `cursor/full-build-plan-32d4`  
-Mode: Phase 0/1/2/3/4 completed (demo); Phase 5 in progress; Phase 6 in progress  
+Mode: Phase 0/1/2/3/4/6 completed (demo/static); Phase 5 in progress; Phase 7 in progress  
 Authoritative spec: `MASTER_BUILD_PROMPT.md`  
 Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` check)
 
 ## Current overall status
 
 - Repository state: planning docs plus Phase 0 scaffold created (`src/`, `tests/`, `config/`, `data/`, `scripts/`, toolchain files).
-- Current phase: **Phase 6 - Scheduling and deployment**
+- Current phase: **Phase 7 - Compliance, hardening, and final QA**
 - Current phase status: **in_progress**
 - Acceptance gate for current phase:
-  - `ci.yml`, `pipeline.yml`, and `daily-maintenance.yml` authored with schedules, timeouts, and concurrency controls ✅
-  - workflow static validation script added and wired into CI (`scripts/validate_workflows.py`) ✅
-  - workflow validator enforces timeout bounds and critical step coverage for operational jobs ✅
-  - workflow validator enforces `Setup Python` `python-version: 3.12` consistency for critical jobs ✅
-  - workflow dispatch defaults preserved in demo mode (`demo_mode=true`) ✅
-  - live-mode workflow secret guards added for pipeline and maintenance runs ✅
-  - deployment/troubleshooting docs updated with workflow behavior, secrets matrix, runbook, and export verification guidance ✅
-  - manual setup docs/checklist aligned with new live-mode workflow guard behavior ✅
+  - Phase 7 QA execution matrix added, mapping acceptance checklist areas to commands/tests/evidence (`docs/verification-report.md`) ✅
+  - Phase 7 secret-hygiene verification checklist added for logs/artifacts and incident triggers (`docs/deployment.md`) ✅
+  - Secret-exposure troubleshooting playbook documented with containment and recovery flow (`docs/troubleshooting.md`) ✅
+  - Manual setup and acceptance checklist cross-reference section added (`docs/verification-report.md`) ✅
+  - Final full-gate verification run and evidence capture pending ⏳
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -35,8 +32,8 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 | 3 | AI analysis | completed | Structured output validation, injection resistance, unchanged skip logic, budget stop behavior | AI provider credentials for live verification | Live OpenAI verification awaiting credentials |
 | 4 | Analytics and views | completed | Metric fixtures match expected values; zero-volume/deleted exclusion behavior | None for demo; DB needed for live SQL execution | None |
 | 5 | Dashboard | in_progress | All pages render in demo mode; filters, export, empty states, browser verification | Streamlit runtime; optional live DB | None |
-| 6 | Scheduling and deployment | in_progress | Workflow YAML valid; dispatch/concurrency/timeouts/schedules correct | GitHub repo settings/secrets; Streamlit Cloud setup | Awaiting manual platform setup |
-| 7 | Compliance, hardening, final QA | pending | Full checks pass; secret hygiene; clean demo launch; DoD checklist complete | Credentials required for live end-to-end verification | Awaiting credentials and platform access |
+| 6 | Scheduling and deployment | completed | Workflow YAML valid; dispatch/concurrency/timeouts/schedules correct | GitHub repo settings/secrets; Streamlit Cloud setup | Awaiting manual platform setup |
+| 7 | Compliance, hardening, final QA | in_progress | Full checks pass; secret hygiene; clean demo launch; DoD checklist complete | Credentials required for live end-to-end verification | Awaiting credentials and platform access |
 
 ---
 
@@ -282,6 +279,9 @@ All are deferred until demo-mode path is complete and validated locally.
 | Aligned manual setup docs/checklist with workflow `demo_mode` dispatch defaults and live-mode guard requirements | Completed |
 | Added workflow validator checks for `Setup Python` version consistency (`python-version: 3.12`) and corresponding tests | Completed |
 | Added compact Phase 6 verification snapshot and Phase 7 evidence scaffolding docs (`docs/verification-report.md`, `docs/privacy-and-compliance.md`) | Completed |
+| Added Phase 7 QA execution matrix and acceptance/manual-setup cross-reference section (`docs/verification-report.md`) | Completed |
+| Added Phase 7 secret-hygiene verification checklist for workflow logs/artifacts (`docs/deployment.md`) | Completed |
+| Added secret-exposure containment and recovery troubleshooting workflow (`docs/troubleshooting.md`) | Completed |
 
 ---
 
@@ -472,12 +472,15 @@ All are deferred until demo-mode path is complete and validated locally.
 - `MANUAL_SETUP_CHECKLIST.md` (updated with demo-mode-first and live-mode dispatch checklist items)
 - `docs/verification-report.md` (updated with compact Phase 6 verification snapshot and command evidence)
 - `docs/privacy-and-compliance.md` (updated with Phase 7 compliance hardening checklist scaffold)
+- `docs/verification-report.md` (updated with Phase 7 QA execution matrix and cross-reference coverage)
+- `docs/deployment.md` (updated with Phase 7 secret-hygiene verification checklist)
+- `docs/troubleshooting.md` (updated with secret-exposure incident troubleshooting playbook)
 - `pyproject.toml` (updated MyPy target version to Python 3.12 for CI compatibility)
 
 ---
 
 ## Next action
 
-1. Add a Phase 7 QA execution matrix in `docs/verification-report.md` linking each acceptance item to concrete commands/tests.
-2. Add Phase 7 secret-hygiene verification steps (log/artifact review checklist) in deployment/troubleshooting docs.
-3. Prepare final DoD pass by verifying manual setup docs and acceptance checklist cross-references are complete.
+1. Run the full required quality gates and capture final command evidence for Phase 7.
+2. Finalize DoD assessment with explicit `validated` vs `AWAITING_CREDENTIALS` markers per acceptance section.
+3. Perform final manual dashboard verification pass (desktop + narrow width) and record evidence notes.
