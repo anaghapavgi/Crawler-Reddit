@@ -13,9 +13,10 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 - Current phase status: **in_progress**
 - Acceptance gate for current phase:
   - `ci.yml`, `pipeline.yml`, and `daily-maintenance.yml` authored with schedules, timeouts, and concurrency controls ✅
+  - workflow static validation script added and wired into CI (`scripts/validate_workflows.py`) ✅
   - workflow dispatch defaults preserved in demo mode (`demo_mode=true`) ✅
   - live-mode workflow secret guards added for pipeline and maintenance runs ✅
-  - deployment/troubleshooting docs updated with workflow behavior and export verification guidance ✅
+  - deployment/troubleshooting docs updated with workflow behavior, secrets matrix, runbook, and export verification guidance ✅
 - Immediate blockers: none for demo-mode progress.
 - Required operating mode: keep `DEMO_MODE=true` until full local demo path is working.
 
@@ -272,6 +273,8 @@ All are deferred until demo-mode path is complete and validated locally.
 | Aligned MyPy target version with CI Python (`pyproject.toml` `python_version=3.12`) after CI syntax failure in dependency stubs | Completed |
 | Added live-mode workflow guards and dispatch controls (`pipeline.yml`, `daily-maintenance.yml`) while preserving demo defaults | Completed |
 | Expanded deployment/troubleshooting docs with workflow behavior and Explorer CSV verification guidance | Completed |
+| Added workflow validation script and CI gate (`scripts/validate_workflows.py`, `.github/workflows/ci.yml`) plus unit coverage (`test_validate_workflows.py`) | Completed |
+| Expanded deployment docs with mode/secret matrix and README runbook dispatch examples | Completed |
 
 ---
 
@@ -452,14 +455,18 @@ All are deferred until demo-mode path is complete and validated locally.
 - `.github/workflows/daily-maintenance.yml` (created)
 - `.github/workflows/pipeline.yml` (updated with `demo_mode` dispatch input + live secret guard)
 - `.github/workflows/daily-maintenance.yml` (updated with `demo_mode` dispatch input + live secret guard)
+- `.github/workflows/ci.yml` (updated to run workflow validation script)
 - `docs/deployment.md` (updated with workflow and CSV-export verification guidance)
 - `docs/troubleshooting.md` (updated with CI/live-mode/export troubleshooting guidance)
+- `README.md` (updated with workflow runbook quick commands)
+- `scripts/validate_workflows.py` (created with static workflow structure/policy checks)
+- `tests/unit/test_validate_workflows.py` (created)
 - `pyproject.toml` (updated MyPy target version to Python 3.12 for CI compatibility)
 
 ---
 
 ## Next action
 
-1. Add workflow validation checks (YAML lint/static checks) and include them in CI or documented pre-merge checks.
-2. Expand deployment docs with explicit secret-setup matrix (required vs optional by mode and command).
-3. Continue Phase 6 by adding manual-dispatch README/operator runbook examples for demo vs live runs.
+1. Add CI workflow runbook links to `README.md` current-status section and align status text with Phase 6 progress.
+2. Add additional workflow validation checks for required timeout bounds and critical step names in `scripts/validate_workflows.py`.
+3. Continue Phase 6 with manual setup docs alignment (`docs/manual-setup.md`, `MANUAL_SETUP_CHECKLIST.md`) for new live-mode workflow guards.
