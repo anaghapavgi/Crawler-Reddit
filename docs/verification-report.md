@@ -108,6 +108,143 @@ Pending manual evidence:
 - note: this cloud coding environment does not provide an interactive browser viewport, so
   final layout validation remains an operator/manual step
 
+## Item-level acceptance checklist traceability
+
+The entries below map every `ACCEPTANCE_CHECKLIST.md` line item to explicit status and
+evidence.
+
+### Installation and configuration
+
+- `[VALIDATED_DEMO]` Clean clone installs successfully.
+  - Evidence: editable install command history and passing quality-gate runs in `BUILD_STATUS.md`.
+- `[VALIDATED_DEMO]` Demo mode launches without external credentials.
+  - Evidence: `python3 scripts/smoke_test.py` and demo-seeding command evidence.
+- `[VALIDATED_DEMO]` Invalid configuration fails with actionable messages.
+  - Evidence: `tests/unit/test_config.py` and CLI/env validation behavior.
+- `[VALIDATED_DEMO + AWAITING_CREDENTIALS]` Secrets are ignored by git and never logged.
+  - Evidence: `.gitignore` coverage and secret-hygiene runbook; live credentialed log review pending.
+
+### Reddit collection
+
+- `[AWAITING_CREDENTIALS]` Read-only OAuth client verified.
+  - Evidence target: live crawl run with Reddit credentials.
+- `[VALIDATED_DEMO + AWAITING_CREDENTIALS]` Configured subreddit/query search works.
+  - Evidence: fixture-path collector tests; live API verification pending.
+- `[VALIDATED_DEMO]` Posts and comments are mapped correctly.
+  - Evidence: `tests/unit/test_reddit_mapper.py`.
+- `[VALIDATED_DEMO]` Comment count is capped.
+  - Evidence: collector integration/unit behavior in collector tests.
+- `[VALIDATED_DEMO]` Duplicate crawl creates no duplicate rows.
+  - Evidence: repository/idempotency and collector integration tests.
+- `[VALIDATED_DEMO + AWAITING_CREDENTIALS]` Active posts refresh correctly.
+  - Evidence: fixture-path refresh logic validated; live refresh pending.
+- `[VALIDATED_DEMO + AWAITING_CREDENTIALS]` Rate-limit information is recorded.
+  - Evidence: collector error/rate-limit tests; live metadata capture pending.
+- `[VALIDATED_DEMO]` Transient failures retry safely.
+  - Evidence: `tests/unit/test_reddit_collector_errors.py`.
+- `[VALIDATED_DEMO]` Permanent failures stop clearly.
+  - Evidence: collector error-classification test coverage.
+
+### Privacy and deletion
+
+- `[VALIDATED_DEMO]` No author/user fields are stored.
+  - Evidence: models/repository schema and mapping behavior.
+- `[VALIDATED_DEMO]` Deleted/removed text is not retained.
+  - Evidence: cleaning + deletion tests (`test_cleaning.py`, `test_deletion_sync.py`).
+- `[VALIDATED_DEMO]` Deletion sync removes downstream evidence.
+  - Evidence: `tests/unit/test_deletion_sync.py`, dashboard filtering tests.
+- `[VALIDATED_DEMO]` Dashboard and CSV exclude deleted records.
+  - Evidence: dashboard data-access/page tests plus explorer sanitization coverage.
+- `[VALIDATED_DEMO]` Privacy/compliance documentation is complete.
+  - Evidence: `docs/privacy-and-compliance.md`.
+
+### AI analysis
+
+- `[VALIDATED_DEMO]` VADER baseline works.
+  - Evidence: `tests/unit/test_sentiment_baseline.py`.
+- `[VALIDATED_DEMO]` Structured output validates against Pydantic.
+  - Evidence: `tests/unit/test_ai_schemas.py`.
+- `[VALIDATED_DEMO]` Labels are restricted to taxonomy.
+  - Evidence: schema/prompt/classifier test coverage.
+- `[VALIDATED_DEMO]` Prompt-injection fixtures are safely analyzed.
+  - Evidence: `tests/unit/test_ai_classifier.py`, prompt fixtures.
+- `[VALIDATED_DEMO]` Unchanged text is not re-analyzed.
+  - Evidence: classifier/reanalysis tests.
+- `[VALIDATED_DEMO]` Prompt-version change permits re-analysis.
+  - Evidence: classifier prompt-version behavior tests.
+- `[VALIDATED_DEMO]` Partial batch failure is recoverable.
+  - Evidence: classifier/retry-queue tests in CLI and repository suites.
+- `[VALIDATED_DEMO]` Token use and cost are stored.
+  - Evidence: analysis persistence/repository tests and budget accounting tests.
+- `[VALIDATED_DEMO]` Budget guard stops cleanly.
+  - Evidence: `tests/unit/test_ai_budget.py`.
+
+### Analytics
+
+- `[VALIDATED_DEMO]` Core metric formulas match documentation.
+  - Evidence: `tests/unit/test_analytics_aggregates.py`, `docs/dashboard-metrics.md`.
+- `[VALIDATED_DEMO]` Emerging-theme score handles zero baseline.
+  - Evidence: analytics aggregate tests.
+- `[VALIDATED_DEMO]` Priority score components are visible.
+  - Evidence: aggregate output and dashboard metric documentation/tests.
+- `[VALIDATED_DEMO]` Evidence sampling is diverse and non-duplicative.
+  - Evidence: aggregate/dash evidence helper tests.
+- `[VALIDATED_DEMO]` Low sample sizes generate warnings.
+  - Evidence: analytics behavior checks and dashboard rendering tests.
+
+### Dashboard
+
+- `[VALIDATED_DEMO]` All nine pages render.
+  - Evidence: `tests/unit/test_dashboard_pages.py`.
+- `[VALIDATED_DEMO]` Global filters persist and work.
+  - Evidence: `tests/unit/test_dashboard_data_access.py`.
+- `[VALIDATED_DEMO]` KPI cards match filtered data.
+  - Evidence: dashboard data-access + page render tests.
+- `[VALIDATED_DEMO]` Charts update correctly.
+  - Evidence: dashboard page tests and deterministic analytics fixtures.
+- `[VALIDATED_DEMO]` Empty states do not crash.
+  - Evidence: dashboard page empty-state coverage.
+- `[VALIDATED_DEMO]` Freshness indicator is accurate.
+  - Evidence: pipeline-health and dashboard rendering logic tests.
+- `[VALIDATED_DEMO]` Demo/live indicator is accurate.
+  - Evidence: dashboard bundle source-path logic tests.
+- `[VALIDATED_DEMO]` CSV export is sanitized.
+  - Evidence: explorer sanitization tests in `test_dashboard_pages.py`.
+- `[VALIDATED_DEMO]` Assistant is evidence-bound and filter-aware.
+  - Evidence: assistant helper tests and dashboard filter tests.
+- `[VALIDATED_DEMO]` Pipeline health shows coverage and spend.
+  - Evidence: `tests/unit/test_pipeline_health.py` and page tests.
+- `[AWAITING_MANUAL_UI]` Desktop and narrow-width layouts are usable.
+  - Evidence target: browser-based operator pass (not available in this cloud coding runtime).
+
+### Automation and deployment
+
+- `[VALIDATED_DEMO]` CI passes.
+  - Evidence: local CI-equivalent gate suite passing.
+- `[VALIDATED_DEMO + AWAITING_CREDENTIALS]` Scheduled pipeline supports manual dispatch.
+  - Evidence: workflow definitions + validator tests; live dispatch pending.
+- `[VALIDATED_DEMO]` Workflows use concurrency and timeouts.
+  - Evidence: workflow YAML + `scripts/validate_workflows.py` checks/tests.
+- `[VALIDATED_DEMO]` Schedule avoids the top of the hour.
+  - Evidence: workflow cron definitions and validator policy checks.
+- `[VALIDATED_DEMO + AWAITING_CREDENTIALS]` Daily maintenance performs deletion sync.
+  - Evidence: workflow step presence + deletion sync tests; live execution pending.
+- `[AWAITING_MANUAL_UI + AWAITING_CREDENTIALS]` Streamlit deployment instructions work.
+  - Evidence target: manual cloud deployment runbook execution.
+
+### Quality
+
+- `[VALIDATED_DEMO]` Ruff format check passes.
+- `[VALIDATED_DEMO]` Ruff lint passes.
+- `[VALIDATED_DEMO]` MyPy passes.
+- `[VALIDATED_DEMO]` Pytest passes.
+- `[VALIDATED_DEMO]` Core coverage is at least 80% or gaps are justified.
+- `[VALIDATED_DEMO]` Smoke test passes.
+- `[VALIDATED_DEMO]` Verification report distinguishes live and mocked checks.
+- `[VALIDATED_DEMO]` Known limitations are documented.
+  - Evidence for all quality items: latest full gate run (`76 passed`, `82%` coverage, smoke success),
+    plus this report's live-vs-demo status sections and documented manual/credential boundaries.
+
 ## Live integration verification status
 
 - Reddit OAuth + PRAW live verification: **AWAITING_CREDENTIALS**

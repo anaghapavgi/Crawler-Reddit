@@ -13,6 +13,7 @@ Persistent rules checked: `AGENTS.md`, `reddit-intelligence.mdc` (and `.cursor` 
 - Current phase status: **in_progress**
 - Acceptance gate for current phase:
   - Phase 7 QA execution matrix added, mapping acceptance checklist areas to commands/tests/evidence (`docs/verification-report.md`) ✅
+  - Item-level acceptance checklist traceability added with explicit status/evidence per checklist line (`docs/verification-report.md`) ✅
   - Phase 7 DoD status summary (`VALIDATED_DEMO` vs `AWAITING_*`) added (`docs/verification-report.md`) ✅
   - Phase 7 secret-hygiene verification checklist added for logs/artifacts and incident triggers (`docs/deployment.md`) ✅
   - Secret-exposure troubleshooting playbook documented with containment and recovery flow (`docs/troubleshooting.md`) ✅
@@ -282,6 +283,7 @@ All are deferred until demo-mode path is complete and validated locally.
 | Added workflow validator checks for `Setup Python` version consistency (`python-version: 3.12`) and corresponding tests | Completed |
 | Added compact Phase 6 verification snapshot and Phase 7 evidence scaffolding docs (`docs/verification-report.md`, `docs/privacy-and-compliance.md`) | Completed |
 | Added Phase 7 QA execution matrix and acceptance/manual-setup cross-reference section (`docs/verification-report.md`) | Completed |
+| Added item-level acceptance checklist traceability for every checklist line (`docs/verification-report.md`) | Completed |
 | Added Phase 7 DoD status summary (`VALIDATED_DEMO` vs `AWAITING_*`) and manual dashboard verification evidence notes (`docs/verification-report.md`) | Completed |
 | Added Phase 7 secret-hygiene verification checklist for workflow logs/artifacts (`docs/deployment.md`) | Completed |
 | Added secret-exposure containment and recovery troubleshooting workflow (`docs/troubleshooting.md`) | Completed |
